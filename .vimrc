@@ -68,67 +68,67 @@
         " Enable syntax highlighting
         syntax on
         " Set how many lines of history VIM has to remember
-        set history=500 
+        set history=500
         " Set to auto read when a file is changed from the outside
-        set autoread 
+        set autoread
         " A buffer becomes hidden when it is abandoned
-        set hidden 
+        set hidden
         " Don't redraw while executing macros (good performance config)
-        set lazyredraw 
+        set lazyredraw
         " For regular expressions turn magic on
-        set magic 
+        set magic
         " Set utf8 as standard encoding
-        set encoding=utf-8 
+        set encoding=utf-8
         set fileencodings=utf-8,prc,latin1
         " Set zh_CN.utf-8 as the standard language
-        language messages zh_CN.utf-8 
+        language messages zh_CN.utf-8
         " Reload menu for showing in Chinese
-        source $VIMRUNTIME/delmenu.vim 
+        source $VIMRUNTIME/delmenu.vim
         source $VIMRUNTIME/menu.vim
         " Use Unix as the standard file type
-        set fileformats=unix,dos,mac 
+        set fileformats=unix,dos,mac
         " Set the directory name for swap file
         set directory+=$TMP//
         " No annoying sound on error
-        set noerrorbells 
+        set noerrorbells
         set novisualbell
         set t_vb=
         " With a map leader it's possible to do extra key combinations
-        let mapleader="," 
+        let mapleader=","
         let g:mapleader=","
     " }}}2
 
     " UI {{{2
         " Minimum lines to keep above and below cursor
-        set scrolloff=3 
+        set scrolloff=3
         " Turn on the wild menu, show list instead of just completing
-        set wildmenu 
+        set wildmenu
         " Ignore custom files
-        set wildignore=*/.git/*,*/.DS_Store 
+        set wildignore=*/.git/*,*/.DS_Store
         " Always show current position
-        set ruler 
+        set ruler
         " Always has a status line
-        set laststatus=2 
+        set laststatus=2
         set statusline=[Buffer:\ %n]\ %f\ %m\ %r
         set statusline+=\ [%{strlen(&fileencoding)?&fileencoding:'none'},%{&fileformat}]
         set statusline+=%=Line:\ %l/%L[%p%%]\ Col:\ %c
         " Configure backspace so it acts as it should act
-        set backspace=eol,start,indent 
+        set backspace=eol,start,indent
         set whichwrap+=<,>,h,l
         " Ignore case when searching
-        set ignorecase 
+        set ignorecase
         " When searching try to be smart about cases
-        set smartcase 
+        set smartcase
         " Makes search act like search in modern browsers
-        set incsearch 
+        set incsearch
         " Show matching brackets when text indicator is over them
-        set showmatch 
+        set showmatch
         " Jump to the first open window that contains the specified buffer when switching
         set switchbuf=useopen
         " Pause listings when the screen is full
         set more
         " Start a dialog when a command fails
-        set confirm     
+        set confirm
         " Highlight current line when in insert mode
         autocmd InsertLeave * set nocursorline
         autocmd InsertEnter * set cursorline
@@ -139,7 +139,7 @@
         autocmd CursorHold * call UpdateFoldcolumn()
 
         " Set extra options when running in GUI mode
-        if has("gui_running") 
+        if has("gui_running")
             " use console dialogs
             set guioptions+=c
             " don't auto-copy selection to * register
@@ -172,21 +172,21 @@
 
     " Formatting {{{2
         " Use spaces instead of tabs
-        set expandtab 
+        set expandtab
         " Be smart when using tabs
-        set smarttab 
+        set smarttab
         " 1 tab == 4 spaces
-        set shiftwidth=4 
+        set shiftwidth=4
         set tabstop=4
         set softtabstop=4
         " Auto indent
-        set autoindent 
+        set autoindent
         " Smart indent
-        set smartindent 
+        set smartindent
         " Highlight problematic whitespace
         set listchars=tab:›-,eol:¬,trail:‹,nbsp:.
         " Remove trailing whitespaces and ^M chars
-        autocmd FileType css,php,javascript autocmd BufWritePre <buffer> call StripTrailingWhitespace()
+        autocmd FileType * autocmd BufWritePre <buffer> call StripTrailingWhitespace()
         " Custom indent style
         autocmd FileType php,javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
     " }}}2
@@ -237,7 +237,7 @@
     " Gundo {{{2
         nnoremap <F5> :GundoToggle<CR>
     " }}}2
-     
+
     " Neocomplcache {{{2
         let g:acp_enableAtStartup = 0
         let g:neocomplcache_enable_at_startup = 1
@@ -259,18 +259,20 @@
         " key-mappings
         inoremap <expr><C-g> neocomplcache#undo_completion()
         inoremap <expr><C-l> neocomplcache#complete_common_string()
-        inoremap <expr><C-c>  neocomplcache#close_popup()
         inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
         inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
 
-        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<SPACE>"
-        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<SPACE>"
+        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
 
-        " Remap Capslock to F12 via autohotkey on windows
-        inoremap <silent><expr><F12> neosnippet#expandable() ? neosnippet#expand_impl() : 
-                    \ neosnippet#jumpable() ? neosnippet#jump_impl() : 
-                    \ pumvisible() ? neocomplcache#close_popup() : "\<ESC>"
-        snoremap <silent><expr><F12> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
+                    \ pumvisible() ? neocomplcache#close_popup() : "\<CR>"
+
+        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+
+        snoremap <C-h> "\<C-h>"
+        snoremap <BS> "\<C-h>"
 
         " Enable omni completion
         autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
@@ -354,23 +356,23 @@
         xnoremap & "*y<Esc>:<c-u>%s/<c-r>=substitute(escape(@*, '\/.*$^~['), "\n", '\\n', "g")<CR>//gc<LEFT><LEFT><LEFT>
     " }}}2
 
-    " Helper function {{{2 
+    " Helper function {{{2
         " Fast source $MYVIMRC
         autocmd bufwritepost .vimrc source $MYVIMRC
 
-        " Return to last edit position when opening files 
+        " Return to last edit position when opening files
         autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-        
+
         " Don't screw up folds when inserting text that might affect them, until leaving insert mode
         autocmd InsertEnter * if !exists('b:lastFoldMethod') | let b:lastFoldMethod=&foldmethod | setlocal foldmethod=manual | endif
         autocmd InsertLeave,WinLeave * if exists('b:lastFoldMethod') | let &l:foldmethod=b:lastFoldMethod | unlet b:lastFoldMethod | endif
-        
+
         " Diff orig file
         if !exists(":DiffOrig")
             command DiffOrig vnew | set buftype=nofile | r # | 0d_ | diffthis | wincmd p | diffthis
         endif
-        
-        " Strip whitespace 
+
+        " Strip whitespace
         function! StripTrailingWhitespace()
             let _s=@/
             let l = line(".")
@@ -393,7 +395,7 @@
         endfunction
 
         " Show foldcolumn when exists folding
-        function! SetFoldcolumn(...) 
+        function! SetFoldcolumn(...)
             let width=a:0>0 ? a:1 : 3
             let lineNum=1
             while lineNum <= line("$")
@@ -411,7 +413,7 @@
             let _level=a:level+0
             if _level<0
                 let _level=0
-            endif 
+            endif
             silent! execute "set foldlevel=" . _level
             echo "foldlevel=" . _level
         endfunction
@@ -430,7 +432,7 @@
             echo
         endfun
 
-        " Customize foldtext 
+        " Customize foldtext
         function! CustomFoldtext()
             let indent = repeat(' ', indent(v:foldstart))
             let startLine = getline(v:foldstart)
@@ -440,7 +442,7 @@
             let foldSizeStr = ' ' . foldSize . ' lines '
             let foldPercentage = printf("[%.1f", (foldSize * 1.0)/line('$') * 100) . "%] "
             let foldLevelStr = repeat('+--', v:foldlevel)
-            " fold comments when set foldmarker = /\*,\*/ 
+            " fold comments when set foldmarker = /\*,\*/
             if match(startLine, '^[ \t]*/\*\(\(\W\|_\)\(\*/\)\@!\)*[ \t]*$') == 0 && match(endLine, '^[ \t]*\(\(/\*\)\@<!\(\W\|_\)\)*\*/[ \t]*$') == 0
                 let temp =matchstr(startLine, '^\([ \t]*/\*\)\ze\(\(\(\W\|_\)\(\*/\)\@!\)*\)')
                 let startStr = substitute(temp, '^\t\+', indent, '')
@@ -504,14 +506,14 @@
                 return
             endif
             let content = readfile(g:NERDTreeBookmarksFile)
-            let desc = repeat(' ', 3) . '1-9 or enter = open, a = add, d = delete, D = delete all, e = edit, q = quit' . repeat(' ', 3)
+            let desc = repeat(' ', 3) . '1-9 or CR = open, a = add, d = delete, D = delete all, e = edit, q or ESC = quit' . repeat(' ', 3)
             let desc = desc . "\n" . repeat('-', strlen(desc))
             " get the max len of bookmark name
             let nameMaxLen = 0
             for line in content
                 if line != ''
                     let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
-                    let nameMaxLen = strlen(name) > nameMaxLen ? strlen(name) : nameMaxLen 
+                    let nameMaxLen = strlen(name) > nameMaxLen ? strlen(name) : nameMaxLen
                 endif
             endfor
             " formatting
@@ -551,7 +553,7 @@
             setlocal statusline=%f%=Line:\ %l/%L[%p%%]\ Col:\ %c
             setlocal noreadonly
             setlocal modifiable
-            " key mapping 
+            " key mapping
             mapclear <buffer>
             nnoremap <buffer> <silent> <CR> :<C-U>call OperateBookmark()<CR>
             nnoremap <buffer> <silent> 1 :<C-U>call OperateBookmark(1)<CR>
@@ -564,6 +566,7 @@
             nnoremap <buffer> <silent> 8 :<C-U>call OperateBookmark(8)<CR>
             nnoremap <buffer> <silent> 9 :<C-U>call OperateBookmark(9)<CR>
             nnoremap <buffer> <silent> q :<C-U>call OperateBookmark('q')<CR>
+            nnoremap <buffer> <silent> <ESC> :<C-U>call OperateBookmark('q')<CR>
             nnoremap <buffer> <silent> a :<C-U>call OperateBookmark('a')<CR>
             nnoremap <buffer> <silent> d :<C-U>call OperateBookmark('d')<CR>
             nnoremap <buffer> <silent> D :<C-U>call OperateBookmark('D')<CR>
@@ -581,7 +584,7 @@
         endfunction
 
         function! OperateBookmark(...)
-            " switch to [SmartNERDTreeBookmark] buffer 
+            " switch to [SmartNERDTreeBookmark] buffer
             if bufwinnr(s:bmBufferId) == -1
                 echohl WarningMsg | echo 'Failed to switch to NERDTree bookmarks list buffer!' | echohl None
                 return
