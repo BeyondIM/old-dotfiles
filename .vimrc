@@ -16,46 +16,44 @@
         endif
     " }}}2
 
-    " Vundle {{{2
-        filetype off
-        set runtimepath+=$HOME/.vim/bundle/vundle/
-        call vundle#rc()
-        let g:vundle_default_git_proto = 'git'
-        " basic
-        Bundle 'gmarik/vundle'
+    " Neobundle {{{2
+        set runtimepath+=$HOME/.vim/bundle/neobundle.vim/
+        call neobundle#rc(expand('$HOME/.vim/bundle/'))
+        " Let NeoBundle manage NeoBundle
+        NeoBundleFetch 'Shougo/neobundle.vim'
         " colorscheme
-        Bundle 'nanotech/jellybeans.vim'
+        NeoBundle 'nanotech/jellybeans.vim'
         " enhancement
-        Bundle 'kien/ctrlp.vim'
-        Bundle 'myusuf3/numbers.vim'
-        Bundle 'godlygeek/tabular'
-        Bundle 'tpope/vim-surround'
-        Bundle 'tpope/vim-repeat'
-        Bundle 'vim-scripts/YankRing.vim'
-        Bundle 'scrooloose/nerdtree'
-        Bundle 'scrooloose/nerdcommenter'
-        Bundle 'sjl/gundo.vim'
+        NeoBundle 'kien/ctrlp.vim'
+        NeoBundle 'myusuf3/numbers.vim'
+        NeoBundleLazy 'godlygeek/tabular', {'autoload':{'commands':'Tabularize'}}
+        NeoBundle 'tpope/vim-surround'
+        NeoBundle 'tpope/vim-repeat'
+        NeoBundle 'vim-scripts/YankRing.vim'
+        NeoBundle 'scrooloose/nerdtree'
+        NeoBundle 'scrooloose/nerdcommenter'
+        NeoBundle 'mbbill/undotree'
         " completion
-        Bundle 'Shougo/vimproc'
-        Bundle 'Shougo/neocomplcache'
-        Bundle 'Shougo/neosnippet'
-        Bundle 'honza/snipmate-snippets'
+        NeoBundle 'Shougo/vimproc'
+        NeoBundle 'Shougo/neocomplcache'
+        NeoBundle 'Shougo/neosnippet'
+        NeoBundle 'honza/snipmate-snippets'
         " html
-        Bundle 'othree/html5.vim'
+        NeoBundleLazy 'othree/html5.vim', {'autoload':{'filetypes':'html'}}
         " css
-        Bundle 'lepture/vim-css'
+        NeoBundleLazy 'lepture/vim-css', {'autoload':{'filetypes':'css'}}
         " php
-        Bundle 'spf13/PIV'
+        NeoBundleLazy 'spf13/PIV', {'autoload':{'filetypes':'php'}}
         " markdown
-        Bundle 'tpope/vim-markdown'
+        NeoBundleLazy 'tpope/vim-markdown', {'autoload':{'filetypes':'markdown'}}
         " gist
-        Bundle 'mattn/webapi-vim'
-        Bundle 'mattn/gist-vim'
+        NeoBundle 'mattn/webapi-vim'
+        NeoBundle 'mattn/gist-vim'
         " tags
-        Bundle 'mozilla/doctorjs'
-        Bundle 'techlivezheng/phpctags'
-        Bundle 'techlivezheng/tagbar-phpctags'
-        Bundle 'majutsushi/tagbar'
+        NeoBundleLazy 'mozilla/doctorjs', '1062dd3', 'same', {'autoload':{'filetypes':'javascript'}}
+        NeoBundleLazy 'techlivezheng/phpctags', {'autoload':{'filetypes':'php'}}
+        NeoBundleLazy 'techlivezheng/tagbar-phpctags', {'autoload':{'filetypes':'php'}}
+        NeoBundle 'majutsushi/tagbar'
     " }}}2
 
 " }}}1
@@ -87,8 +85,20 @@
         source $VIMRUNTIME/menu.vim
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
-        " Set the directory name for swap file
-        set directory+=$TMP//
+        " Set the dir for swap file
+        set directory=$TMP
+        " Set backup dir
+        set backup
+        set backupdir=$TMP
+        " Set views dir
+        set viewdir=$HOME/.cache/view
+        " Set undo dir
+        if has('persistent_undo')
+            set undodir=$HOME/.cache/undo
+            set undofile
+        endif
+        " Use * register for copy-paste
+        set clipboard=unnamed
         " No annoying sound on error
         set noerrorbells
         set novisualbell
@@ -109,9 +119,9 @@
         set ruler
         " Always has a status line
         set laststatus=2
-        set statusline=[Buffer:\ %n]\ %f\ %m\ %r
+        set statusline=[#%n]\ [%{getcwd()}]\ %f\ %m\ %r
         set statusline+=\ [%{strlen(&fileencoding)?&fileencoding:'none'},%{&fileformat}]
-        set statusline+=%=Line:\ %l/%L[%p%%]\ Col:\ %c
+        set statusline+=%=L:\ %l/%L[%p%%]\ C:\ %c
         " Configure backspace so it acts as it should act
         set backspace=eol,start,indent
         set whichwrap+=<,>,h,l
@@ -218,11 +228,11 @@
                     \ 'dir' : '\c^\(c:\\Windows\|c:\\Users\\Administrator\)',
                     \ 'file' : '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$',
                     \ }
-        let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp'
+        let g:ctrlp_cache_dir = '$HOME/.cache/ctrlp'
     " }}}2
 
     " YankRing {{{2
-        let g:yankring_history_dir = $HOME.'/.cache'
+        let g:yankring_history_dir = '$HOME/.cache'
         nnoremap <silent> <Leader>y :YRGetElem<CR>
         function! YRRunAfterMaps()
             nnoremap <silent> Y :<C-U>YRYankCount 'y$'<CR>
@@ -234,8 +244,9 @@
         let g:PIVAutoClose = 0
     " }}}2
 
-    " Gundo {{{2
-        nnoremap <F5> :GundoToggle<CR>
+    " Undotree {{{2
+        nnoremap <leader>u :UndotreeToggle<CR>
+        let g:undotree_SetFocusWhenToggle = 1
     " }}}2
 
     " Neocomplcache {{{2
@@ -248,7 +259,7 @@
         let g:neocomplcache_enable_underbar_completion = 1
         let g:neocomplcache_use_vimproc = 1
         let g:neocomplcache_min_syntax_length = 3
-        let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
+        let g:neocomplcache_temporary_dir = '$HOME/.cache/.neocon'
 
         " Define keyword, for minor languages
         if !exists('g:neocomplcache_keyword_patterns')
@@ -295,7 +306,15 @@
         let g:tagbar_systemenc = 'cp936'
         let g:tagbar_autofocus = 1
         let g:tagbar_type_javascript = { 'ctagsbin' : '$HOME/bin/jsctags.bat' }
-        let g:tagbar_phpctags_bin = '$HOME/.vim/bundle/phpctags/phpctags.php'
+        let g:tagbar_phpctags_bin = '$HOME/bin/phpctags.bat'
+        let g:tagbar_type_markdown = {
+                    \ 'ctagstype' : 'markdown',
+                    \ 'kinds' : [
+                    \ 'h:Heading_L1',
+                    \ 'i:Heading_L2',
+                    \ 'k:Heading_L3'
+                    \ ]
+                    \ }
     " }}}2
 
 " }}}1
@@ -362,6 +381,9 @@
 
         " Return to last edit position when opening files
         autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+
+        " Set working directory to the current file
+        autocmd BufEnter * if expand("%:p:h") !~ '^C:\\Windows\\system32' | silent! lcd %:p:h | endif
 
         " Don't screw up folds when inserting text that might affect them, until leaving insert mode
         autocmd InsertEnter * if !exists('b:lastFoldMethod') | let b:lastFoldMethod=&foldmethod | setlocal foldmethod=manual | endif
@@ -492,7 +514,6 @@
                 endif
             endif
         endfunction
-        " }
 
         " Smart NERDTree bookmarks list
         function! SmartNERDTreeBookmark()
@@ -684,7 +705,7 @@
         if has("gui_running")
             function! ScreenFilename()
                 if has('win32') || has('win64')
-                    return $HOME.'/.cache/.vimsize'
+                    return $HOME . '/.cache/.vimsize'
                 endif
             endfunction
 
