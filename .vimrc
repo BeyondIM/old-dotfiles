@@ -34,8 +34,7 @@
         NeoBundle 'scrooloose/nerdcommenter'
         NeoBundle 'mbbill/undotree'
         " completion
-        NeoBundle 'Shougo/vimproc'
-        NeoBundle 'Shougo/neocomplcache'
+        NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
         NeoBundle 'Shougo/neosnippet'
         NeoBundle 'honza/snipmate-snippets'
         " html
@@ -44,11 +43,12 @@
         NeoBundleLazy 'lepture/vim-css', {'autoload':{'filetypes':'css'}}
         " php
         NeoBundleLazy 'spf13/PIV', {'autoload':{'filetypes':'php'}}
+        " javascript
+        NeoBundleLazy 'pangloss/vim-javascript', {'autoload':{'filetypes':'javascript'}}
         " markdown
         NeoBundleLazy 'tpope/vim-markdown', {'autoload':{'filetypes':'markdown'}}
         " gist
-        NeoBundle 'mattn/webapi-vim'
-        NeoBundle 'mattn/gist-vim'
+        NeoBundleLazy 'mattn/gist-vim', {'depends':'mattn/webapi-vim', 'autoload':{'commands':'Gist'}}
         " tags
         NeoBundleLazy 'mozilla/doctorjs', '1062dd3', 'same', {'autoload':{'filetypes':'javascript'}}
         NeoBundleLazy 'techlivezheng/phpctags', {'autoload':{'filetypes':'php'}}
@@ -243,6 +243,12 @@
         let g:DisableAutoPHPFolding = 0
         let g:PIVAutoClose = 0
     " }}}2
+
+    "Vim-javascript {{{2
+        let g:html_indent_inctags = "html,body,head,tbody"
+        let g:html_indent_script1 = "inc"
+        let g:html_indent_style1 = "inc"
+    " }}}
 
     " Undotree {{{2
         nnoremap <leader>u :UndotreeToggle<CR>
