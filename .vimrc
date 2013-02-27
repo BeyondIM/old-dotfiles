@@ -4,10 +4,16 @@
     " Base {{{2
         " Important
         set nocompatible
-        " Remove all autocommands to avoid sourcing them twice
-        autocmd!
+        " Set environment variable
+        if has('win32') || has('win64')
+            let $HOME = escape(substitute(expand($HOME), '\\', '/', 'g'), ' ')
+            let $VIM  = escape(substitute(expand($VIM), '\\', '/', 'g'), ' ')
+            let $VIMRUNTIME = escape(substitute(expand($VIMRUNTIME), '\\', '/', 'g'), ' ')
+        endif
         " Set viminfo path
         set viminfo+=n$HOME/.cache/.viminfo
+        " Remove all autocommands to avoid sourcing them twice
+        autocmd!
     " }}}2
 
     " Windows Compatible {{{2
@@ -75,26 +81,22 @@
         set lazyredraw
         " For regular expressions turn magic on
         set magic
-        " Set utf8 as standard encoding
+        " Set utf-8 as standard encoding
         set encoding=utf-8
+        set fileencoding=utf-8
         set fileencodings=utf-8,prc,latin1
+        scriptencoding utf-8
         " Set zh_CN.utf-8 as the standard language
         language messages zh_CN.utf-8
-        " Reload menu for showing in Chinese
+        " Reload menu to show Chinese characters properly
         source $VIMRUNTIME/delmenu.vim
         source $VIMRUNTIME/menu.vim
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
-        " Set the dir for swap file
-        set directory=$TMP
-        " Set backup dir
+        " Make a backup before overwriting a file
         set backup
-        set backupdir=$TMP
-        " Set views dir
-        set viewdir=$HOME/.cache/view
-        " Set undo dir
+        " Saves undo history when writing buffer to file and restores on buffer read
         if has('persistent_undo')
-            set undodir=$HOME/.cache/undo
             set undofile
         endif
         " Use * register for copy-paste
@@ -109,6 +111,8 @@
     " }}}2
 
     " UI {{{2
+        " Set numberwidth
+        set numberwidth=6
         " Minimum lines to keep above and below cursor
         set scrolloff=3
         " Turn on the wild menu, show list instead of just completing
@@ -117,9 +121,9 @@
         set wildignore=*/.git/*,*/.DS_Store
         " Always show current position
         set ruler
-        " Always has a status line
+        " Set status line format
         set laststatus=2
-        set statusline=[#%n]\ [%{getcwd()}]\ %f\ %m\ %r
+        set statusline=[b%n]\ [%{getcwd()}]\ %f\ %m\ %r
         set statusline+=\ [%{strlen(&fileencoding)?&fileencoding:'none'},%{&fileformat}]
         set statusline+=%=L:\ %l/%L[%p%%]\ C:\ %c
         " Configure backspace so it acts as it should act
@@ -133,27 +137,26 @@
         set incsearch
         " Show matching brackets when text indicator is over them
         set showmatch
+        set matchtime=3
+        " Specifies for which type of commands folds will be opened
+        set foldopen=block,hor,insert,mark,percent,quickfix,search,tag,undo
+        " Set foldtext
+        set foldtext=CustomFoldtext()
         " Jump to the first open window that contains the specified buffer when switching
         set switchbuf=useopen
+        " Allow virtual editing in Visual block mode
+        set virtualedit+=block
+        " Abbrev. of messages (avoids 'hit enter')
+        set shortmess+=filmnrxoOtT
         " Pause listings when the screen is full
         set more
         " Start a dialog when a command fails
         set confirm
-        " Highlight current line when in insert mode
-        autocmd InsertLeave * set nocursorline
-        autocmd InsertEnter * set cursorline
-        " Set foldtext
-        set foldtext=CustomFoldtext()
-        " Show foldcolumn when exists folding
-        autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
-        autocmd CursorHold * call UpdateFoldcolumn()
 
         " Set extra options when running in GUI mode
         if has("gui_running")
             " use console dialogs
             set guioptions+=c
-            " don't auto-copy selection to * register
-            set guioptions-=a
             " don't use gui tabs
             set guioptions-=e
             " don't show menubar
@@ -194,11 +197,9 @@
         " Smart indent
         set smartindent
         " Highlight problematic whitespace
-        set listchars=tab:›-,eol:¬,trail:‹,nbsp:.
-        " Remove trailing whitespaces and ^M chars
-        autocmd FileType * autocmd BufWritePre <buffer> call StripTrailingWhitespace()
-        " Custom indent style
-        autocmd FileType php,javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
+        set listchars=tab:»-,trail:·,eol:¬,nbsp:×,precedes:«,extends:»
+        " String to put at the start of lines that have been wrapped
+        set showbreak=└
     " }}}2
 
 " }}}1
@@ -213,26 +214,26 @@
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
         let NERDTreeIgnore=['\~$', '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$']
-        let NERDTreeBookmarksFile = $HOME . '/.cache/.NERDTreeBookmarks'
+        let NERDTreeBookmarksFile = $HOME.'/.cache/.NERDTreeBookmarks'
         let NERDTreeDirArrows = 1
         let NERDTreeAutoDeleteBuffer = 1
-        nnoremap <silent> <leader>nb :<C-U>call SmartNERDTreeBookmark()<CR>
+        nnoremap <silent> <leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
     " }}}2
 
     " CtrlP {{{2
-        nnoremap <silent> <leader>ff :CtrlP<CR>
-        nnoremap <silent> <Leader>fr :CtrlPMRU<CR>
-        nnoremap <silent> <leader>b :CtrlPBuffer<CR>
+        nnoremap <silent> <leader>ff :<C-U>CtrlP<CR>
+        nnoremap <silent> <Leader>fr :<C-U>CtrlPMRU<CR>
+        nnoremap <silent> <leader>b :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
                     \ 'dir' : '\c^\(c:\\Windows\|c:\\Users\\Administrator\)',
                     \ 'file' : '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$',
                     \ }
-        let g:ctrlp_cache_dir = '$HOME/.cache/ctrlp'
+        let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp'
     " }}}2
 
     " YankRing {{{2
-        let g:yankring_history_dir = '$HOME/.cache'
+        let g:yankring_history_dir = $HOME.'/.cache'
         nnoremap <silent> <Leader>y :YRGetElem<CR>
         function! YRRunAfterMaps()
             nnoremap <silent> Y :<C-U>YRYankCount 'y$'<CR>
@@ -244,11 +245,11 @@
         let g:PIVAutoClose = 0
     " }}}2
 
-    "Vim-javascript {{{2
+    " Vim-javascript {{{2
         let g:html_indent_inctags = "html,body,head,tbody"
         let g:html_indent_script1 = "inc"
         let g:html_indent_style1 = "inc"
-    " }}}
+    " }}}2
 
     " Undotree {{{2
         nnoremap <leader>u :UndotreeToggle<CR>
@@ -265,7 +266,7 @@
         let g:neocomplcache_enable_underbar_completion = 1
         let g:neocomplcache_use_vimproc = 1
         let g:neocomplcache_min_syntax_length = 3
-        let g:neocomplcache_temporary_dir = '$HOME/.cache/.neocon'
+        let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
 
         " Define keyword, for minor languages
         if !exists('g:neocomplcache_keyword_patterns')
@@ -273,7 +274,7 @@
         endif
         let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
 
-        " key-mappings
+        " key mappings
         inoremap <expr><C-g> neocomplcache#undo_completion()
         inoremap <expr><C-l> neocomplcache#complete_common_string()
         inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
@@ -302,17 +303,17 @@
         endif
 
         "Use snipmate snippets
-        let g:neosnippet#snippets_directory='$HOME/.vim/bundle/snipmate-snippets/snippets'
+        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/snipmate-snippets/snippets'
         let g:neosnippet#enable_snipmate_compatibility = 1
     " }}}2
 
     " Tagbar {{{2
         nnoremap <silent> <leader>t :TagbarToggle<CR>
-        let g:tagbar_ctags_bin = '$HOME/bin/ctags58/ctags.exe'
+        let g:tagbar_ctags_bin = $HOME.'/bin/ctags58/ctags.exe'
         let g:tagbar_systemenc = 'cp936'
         let g:tagbar_autofocus = 1
-        let g:tagbar_type_javascript = { 'ctagsbin' : '$HOME/bin/jsctags.bat' }
-        let g:tagbar_phpctags_bin = '$HOME/bin/phpctags.bat'
+        let g:tagbar_type_javascript = { 'ctagsbin' : $HOME.'/bin/jsctags.bat' }
+        let g:tagbar_phpctags_bin = $HOME.'/bin/phpctags.bat'
         let g:tagbar_type_markdown = {
                     \ 'ctagstype' : 'markdown',
                     \ 'kinds' : [
@@ -326,9 +327,53 @@
 " }}}1
 
 
-" Misc {{{1
+" Commands, key mapping {{{1
 
-    " Helper key mapping {{{2
+    " Commands {{{2
+        " Highlight current line when in insert mode
+        autocmd InsertLeave * set nocursorline
+        autocmd InsertEnter * set cursorline
+
+        " Show foldcolumn when having folding
+        autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
+        autocmd CursorHold * call UpdateFoldcolumn()
+
+        " Remove trailing whitespaces and ^M chars
+        autocmd BufWritePre <buffer> call StripTrailingWhitespace()
+
+        " Customize indent style
+        autocmd FileType php,javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
+
+        " Fast source $MYVIMRC
+        autocmd BufWritePost .vimrc source $MYVIMRC
+
+        " Return to last edit position when opening files
+        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+
+        " Set working directory to the current file
+        autocmd BufEnter * if expand("%:p:h") !~ '^C:\\Windows\\system32' | silent! lcd %:p:h | endif
+
+        " Create directories for swap, backup, undo, view files if they don't exist
+        autocmd VimEnter * call s:InitializeDirectories()
+
+        " Save and load latest state of window size and opacity
+        autocmd VimEnter * call s:ReadFrameParams()
+        autocmd VimLeavePre * call s:WriteFrameParams()
+
+        " Save bookmark when leaving
+        autocmd VimLeavePre * call s:WriteBookmraksFile()
+
+        " Diff orig file
+        if !exists(":DiffOrig")
+            command DiffOrig vnew | set buftype=nofile | r # | 0d_ | diffthis | wincmd p | diffthis
+        endif
+
+        " Delete buffer while keeping window layout
+        command! -bang -complete=buffer -nargs=? Bclose call s:Bclose('<bang>', '<args>')
+        nnoremap <silent> <Leader>db :Bclose<CR>
+        " }}}2
+
+    " Key mappings {{{2
         noremap   <Up>     <NOP>
         noremap   <Down>   <NOP>
         noremap   <Left>   <NOP>
@@ -350,24 +395,43 @@
         nnoremap <M-+> <C-W>+
         nnoremap <M--> <C-W>-
         nnoremap <M-=> <C-W>=
-        " Other window command key mapping
+        " Other window command key mappings
         nnoremap <M-o> <C-W>o
         nnoremap <M-q> <C-W>q
 
         " Fast saving
         nnoremap <leader>w :<C-U>w!<CR>
+
         " Toggle search highlighting
         nnoremap <silent> <leader>/ :set hlsearch! hlsearch?<CR>
-        " Quickly set foldlevel when zr/zm seems slowly
-        nnoremap <silent> <Leader><Leader>l :<C-U>call SetFoldlevel(input("Enter foldlevel: "))<CR>
+
+        " Quickly set foldlevel when zr/zm seems slow
+        nnoremap <silent> <Leader>fl :<C-U>call SetFoldlevel(input("Enter foldlevel: "))<CR>
+
+        " Quickly set foldmethod
+        nnoremap <silent> <leader>f1 :<C-U>setlocal foldmethod=marker<BAR>setlocal foldmarker={,}<BAR>setlocal foldtext=CustomFoldtext()<CR>
+        nnoremap <silent> <leader>f2 :<C-U>setlocal foldmethod=marker<BAR>setlocal foldmarker=/\*,\*/<BAR>setlocal foldtext=CustomFoldtext()<CR>
+
+        " Toggle menubar
+        nnoremap <silent> <leader><leader>m :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>else<BAR>set guioptions+=m<BAR>endif<CR>
+
         " Toggle folds
         nnoremap <space> :<C-U>call ToggleFold()<CR>
+
+        " Invert 'foldenable'
+        nnoremap <leader><space> <ESC>zi
+
         " Toggle wrap lines
         nnoremap <silent> <F2> :set wrap! wrap?<CR>
+
         " Toggle listchars
         nnoremap <silent> <F3> :set list! list?<CR>
         imap <F2> <C-O><F2>
         xmap <F2> <Esc><F2>gv
+
+        " Don't jump when using * for search
+        nnoremap * *<c-o>
+
         " Search for selected text, forwards or backwards.
         vnoremap <silent> * :<C-U>
                     \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
@@ -377,30 +441,22 @@
                     \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
                     \gvy?<C-R><C-R>=substitute(escape(@", '?\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
                     \gV:call setreg('"', old_reg, old_regtype)<CR>
+
         " Substitute visual selection
         xnoremap & "*y<Esc>:<c-u>%s/<c-r>=substitute(escape(@*, '\/.*$^~['), "\n", '\\n', "g")<CR>//gc<LEFT><LEFT><LEFT>
+
+        " Adjust window size and opacity
+        nnoremap <silent> <F12> :<C-U>call <SID>AdjustFrameSize()<CR>
+        nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
+        nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
     " }}}2
 
-    " Helper function {{{2
-        " Fast source $MYVIMRC
-        autocmd bufwritepost .vimrc source $MYVIMRC
+" }}}1
 
-        " Return to last edit position when opening files
-        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 
-        " Set working directory to the current file
-        autocmd BufEnter * if expand("%:p:h") !~ '^C:\\Windows\\system32' | silent! lcd %:p:h | endif
+" Functions {{{1
 
-        " Don't screw up folds when inserting text that might affect them, until leaving insert mode
-        autocmd InsertEnter * if !exists('b:lastFoldMethod') | let b:lastFoldMethod=&foldmethod | setlocal foldmethod=manual | endif
-        autocmd InsertLeave,WinLeave * if exists('b:lastFoldMethod') | let &l:foldmethod=b:lastFoldMethod | unlet b:lastFoldMethod | endif
-
-        " Diff orig file
-        if !exists(":DiffOrig")
-            command DiffOrig vnew | set buftype=nofile | r # | 0d_ | diffthis | wincmd p | diffthis
-        endif
-
-        " Strip whitespace
+    " Strip whitespace {{{2
         function! StripTrailingWhitespace()
             let _s=@/
             let l = line(".")
@@ -409,8 +465,9 @@
             let @/=_s
             call cursor(l, c)
         endfunction
+    " }}}2
 
-        " Update SetFoldcolumn function in a interval
+    " Call SetFoldcolumn function at intervals {{{2
         function! UpdateFoldcolumn(...)
             let interval=a:0>0 ? a:1 : 5
             let funcArg=a:0>1 ? a:2 : ''
@@ -421,8 +478,9 @@
                 let b:savedTime=localtime()
             endif
         endfunction
+    " }}}2
 
-        " Show foldcolumn when exists folding
+    " Show foldcolumn when having folding {{{2
         function! SetFoldcolumn(...)
             let width=a:0>0 ? a:1 : 3
             let lineNum=1
@@ -435,8 +493,9 @@
             endwhile
             silent! execute "set foldcolumn=0"
         endfunction
+    " }}}2
 
-        " Quickly set foldlevel
+    " Quickly set foldlevel {{{2
         function! SetFoldlevel(level)
             let _level=a:level+0
             if _level<0
@@ -445,8 +504,9 @@
             silent! execute "set foldlevel=" . _level
             echo "foldlevel=" . _level
         endfunction
+    " }}}2
 
-        " Toggle fold state between closed and opened
+    " Toggle fold state between closed and opened {{{2
         function! ToggleFold()
             if foldlevel('.') == 0
                 normal! l
@@ -459,8 +519,9 @@
             endif
             echo
         endfun
+    " }}}2
 
-        " Customize foldtext
+    " Customize foldtext {{{2
         function! CustomFoldtext()
             let indent = repeat(' ', indent(v:foldstart))
             let startLine = getline(v:foldstart)
@@ -470,8 +531,9 @@
             let foldSizeStr = ' ' . foldSize . ' lines '
             let foldPercentage = printf("[%.1f", (foldSize * 1.0)/line('$') * 100) . "%] "
             let foldLevelStr = repeat('+--', v:foldlevel)
-            " fold comments when set foldmarker = /\*,\*/
-            if match(startLine, '^[ \t]*/\*\(\(\W\|_\)\(\*/\)\@!\)*[ \t]*$') == 0 && match(endLine, '^[ \t]*\(\(/\*\)\@<!\(\W\|_\)\)*\*/[ \t]*$') == 0
+            " fold comments when setting foldmarker as /\*,\*/
+            if match(startLine, '^[ \t]*/\*\(\(\W\|_\)\(\*/\)\@!\)*[ \t]*$') == 0 &&
+                        \match(endLine, '^[ \t]*\(\(/\*\)\@<!\(\W\|_\)\)*\*/[ \t]*$') == 0
                 let temp =matchstr(startLine, '^\([ \t]*/\*\)\ze\(\(\(\W\|_\)\(\*/\)\@!\)*\)')
                 let startStr = substitute(temp, '^\t\+', indent, '')
                 let text = startStr . ' ... */'
@@ -495,12 +557,12 @@
                     return text.foldSizeStr.foldPercentage.foldLevelStr
                 endif
             endif
-            " fold contents when set foldmarker = {,}
-            if match(startLine, '{\+\d\=\ze[ \t]*$') > 0 && match(endLine, '^[ \t"]*\zs}\+\d\=') > 0
+            " fold codes when setting foldmarker as {,}
+            if match(startLine, '{\+\d\=\ze[ \t]*$') != -1 && match(endLine, '^[ \t"]*\zs}\+\d\=') != -1
                 let startBracket = matchstr(startLine, '{\+\d\=\ze[ \t]*$')
                 let temp = substitute(startLine, '{\+\d\=[ \t]*$', '', '')
                 let startStr = substitute(temp, '^\t\+', indent, '')
-                let endBracket =matchstr(endLine, '^[ \t"]*\zs}\+\d\=')
+                let endBracket = matchstr(endLine, '^[ \t"]*\zs}\+\d\=')
                 let endStr = substitute(endLine, '^[ \t"]*}\+\d\=', '', '')
                 let text = startStr . startBracket . '...' . endBracket . endStr
                 let expansionWidth = windowWidth - strwidth(text.foldSizeStr.foldPercentage.foldLevelStr)
@@ -520,24 +582,29 @@
                 endif
             endif
         endfunction
+    " }}}2
 
-        " Smart NERDTree bookmarks list
-        function! SmartNERDTreeBookmark()
+    " Smart NERDTree bookmarks list {{{2
+        function! s:SmartNERDTreeBookmark()
             " initialize
             if !filereadable(g:NERDTreeBookmarksFile)
-                echohl WarningMsg | echo "g:NERDTreeBookmarksFile doesn't exist or can't read!" | echohl None
-                return
+                silent! execute 'keepalt botright 1new'
+                silent! execute 'edit ' . g:NERDTreeBookmarksFile
+                silent! execute 'write!'
+                silent! execute 'wincmd q'
+                if !filereadable(g:NERDTreeBookmarksFile)
+                    echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't read!" | echohl None
+                    return
+                endif
             endif
-            if filewritable(g:NERDTreeBookmarksFile) == 0
-                echohl WarningMsg | echo "g:NERDTreeBookmarksFile doesn't exist or can't write!" | echohl None
-                return
+            if !exists('s:bmContent')
+                let s:bmContent = readfile(g:NERDTreeBookmarksFile)
             endif
-            let content = readfile(g:NERDTreeBookmarksFile)
             let desc = repeat(' ', 3) . '1-9 or CR = open, a = add, d = delete, D = delete all, e = edit, q or ESC = quit' . repeat(' ', 3)
             let desc = desc . "\n" . repeat('-', strlen(desc))
             " get the max len of bookmark name
             let nameMaxLen = 0
-            for line in content
+            for line in s:bmContent
                 if line != ''
                     let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
                     let nameMaxLen = strlen(name) > nameMaxLen ? strlen(name) : nameMaxLen
@@ -545,7 +612,7 @@
             endfor
             " formatting
             let output = []
-            for line in content
+            for line in s:bmContent
                 if line != ''
                     let lineNum = !exists('lineNum') ? 1 : (lineNum+1)
                     let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
@@ -556,15 +623,15 @@
                     else
                         let newLine = repeat(' ', 3) . name . ' => ' . path
                     endif
-                    let output = empty('output') ? newLine : add(output, newLine)
+                    call add(output, newLine)
                 endif
             endfor
             " always switch to the [SmartNERDTreeBookmark] buffer if exists
             let s:bmBufferId = -1
             let s:bmBufferName = '[SmartNERDTreeBookmark]'
             if bufwinnr(s:bmBufferId) == -1
-                silent! execute 'silent! keepalt botright ' . (len(output)>0 ? len(output)+2 : 3) . 'split'
-                silent! execute ':e ' . s:bmBufferName
+                silent! execute 'keepalt botright ' . (len(output)>0 ? len(output)+2 : 3) . 'split'
+                silent! execute 'edit ' . s:bmBufferName
                 let s:bmBufferId = bufnr('%') + 0
             else
                 silent! execute bufwinnr(s:bmBufferId) . 'wincmd w'
@@ -582,22 +649,22 @@
             setlocal modifiable
             " key mapping
             mapclear <buffer>
-            nnoremap <buffer> <silent> <CR> :<C-U>call OperateBookmark()<CR>
-            nnoremap <buffer> <silent> 1 :<C-U>call OperateBookmark(1)<CR>
-            nnoremap <buffer> <silent> 2 :<C-U>call OperateBookmark(2)<CR>
-            nnoremap <buffer> <silent> 3 :<C-U>call OperateBookmark(3)<CR>
-            nnoremap <buffer> <silent> 4 :<C-U>call OperateBookmark(4)<CR>
-            nnoremap <buffer> <silent> 5 :<C-U>call OperateBookmark(5)<CR>
-            nnoremap <buffer> <silent> 6 :<C-U>call OperateBookmark(6)<CR>
-            nnoremap <buffer> <silent> 7 :<C-U>call OperateBookmark(7)<CR>
-            nnoremap <buffer> <silent> 8 :<C-U>call OperateBookmark(8)<CR>
-            nnoremap <buffer> <silent> 9 :<C-U>call OperateBookmark(9)<CR>
-            nnoremap <buffer> <silent> q :<C-U>call OperateBookmark('q')<CR>
-            nnoremap <buffer> <silent> <ESC> :<C-U>call OperateBookmark('q')<CR>
-            nnoremap <buffer> <silent> a :<C-U>call OperateBookmark('a')<CR>
-            nnoremap <buffer> <silent> d :<C-U>call OperateBookmark('d')<CR>
-            nnoremap <buffer> <silent> D :<C-U>call OperateBookmark('D')<CR>
-            nnoremap <buffer> <silent> e :<C-U>call OperateBookmark('e')<CR>
+            nnoremap <buffer> <silent> <CR> :<C-U>call <SID>HandleBookmark()<CR>
+            nnoremap <buffer> <silent> 1 :<C-U>call <SID>HandleBookmark(1)<CR>
+            nnoremap <buffer> <silent> 2 :<C-U>call <SID>HandleBookmark(2)<CR>
+            nnoremap <buffer> <silent> 3 :<C-U>call <SID>HandleBookmark(3)<CR>
+            nnoremap <buffer> <silent> 4 :<C-U>call <SID>HandleBookmark(4)<CR>
+            nnoremap <buffer> <silent> 5 :<C-U>call <SID>HandleBookmark(5)<CR>
+            nnoremap <buffer> <silent> 6 :<C-U>call <SID>HandleBookmark(6)<CR>
+            nnoremap <buffer> <silent> 7 :<C-U>call <SID>HandleBookmark(7)<CR>
+            nnoremap <buffer> <silent> 8 :<C-U>call <SID>HandleBookmark(8)<CR>
+            nnoremap <buffer> <silent> 9 :<C-U>call <SID>HandleBookmark(9)<CR>
+            nnoremap <buffer> <silent> q :<C-U>call <SID>HandleBookmark('q')<CR>
+            nnoremap <buffer> <silent> <ESC> :<C-U>call <SID>HandleBookmark('q')<CR>
+            nnoremap <buffer> <silent> a :<C-U>call <SID>HandleBookmark('a')<CR>
+            nnoremap <buffer> <silent> d :<C-U>call <SID>HandleBookmark('d')<CR>
+            nnoremap <buffer> <silent> D :<C-U>call <SID>HandleBookmark('D')<CR>
+            nnoremap <buffer> <silent> e :<C-U>call <SID>HandleBookmark('e')<CR>
             " show bookmarks
             silent! execute '%delete _'
             silent! put! = desc
@@ -610,7 +677,7 @@
             setlocal nomodifiable
         endfunction
 
-        function! OperateBookmark(...)
+        function! s:HandleBookmark(...)
             " switch to [SmartNERDTreeBookmark] buffer
             if bufwinnr(s:bmBufferId) == -1
                 echohl WarningMsg | echo 'Failed to switch to NERDTree bookmarks list buffer!' | echohl None
@@ -623,7 +690,6 @@
                     hide
                     return
                 elseif a:1 ==# 'a'
-                    let content = readfile(g:NERDTreeBookmarksFile)
                     let path = input('Directory to bookmark: ', '', 'dir')
                     if path != ''
                         let path = substitute(path, '\\ ', ' ', 'g')
@@ -640,35 +706,29 @@
                     let line = name . ' '. path
                     let match = search(escape(path, ' \'), '', '')
                     if match > 2
-                        call remove(content, match-3)
-                        call insert(content, line, match-3)
+                        call remove(s:bmContent, match-3)
+                        call insert(s:bmContent, line, match-3)
                     else
-                        call insert(content, line)
+                        call insert(s:bmContent, line)
                     endif
-                    call writefile(content, g:NERDTreeBookmarksFile)
                     hide
-                    call SmartNERDTreeBookmark()
+                    call s:SmartNERDTreeBookmark()
                     return
                 elseif a:1 ==# 'd'
-                    let content = readfile(g:NERDTreeBookmarksFile)
                     if line('.') > 2
-                        call remove(content, line('.')-3)
+                        call remove(s:bmContent, line('.')-3)
                     else
                         return
                     endif
-                    call writefile(content, g:NERDTreeBookmarksFile)
                     hide
-                    call SmartNERDTreeBookmark()
+                    call s:SmartNERDTreeBookmark()
                     return
                 elseif a:1 ==# 'D'
-                    let content = readfile(g:NERDTreeBookmarksFile)
-                    call remove(content, 0, -1)
-                    call writefile(content, g:NERDTreeBookmarksFile)
+                    call remove(s:bmContent, 0, -1)
                     hide
-                    call SmartNERDTreeBookmark()
+                    call s:SmartNERDTreeBookmark()
                     return
                 elseif a:1 ==# 'e'
-                    let content = readfile(g:NERDTreeBookmarksFile)
                     if line('.') > 2
                         let name = substitute(getline('.'), '^\%([1-9]\.\)\= *\(.\{-1,}\) *=> .\+$', '\1', '')
                         let path = substitute(getline('.'), '^\%([1-9]\.\)\= *.\{-1,} *=> \(.\+\)$', '\1', '')
@@ -686,14 +746,13 @@
                             let newName = name
                         endif
                         let newLine = newName . ' '. newPath
-                        call remove(content, line('.')-3)
-                        call insert(content, newLine, line('.')-3)
+                        call remove(s:bmContent, line('.')-3)
+                        call insert(s:bmContent, newLine, line('.')-3)
                     else
                         return
                     endif
-                    call writefile(content, g:NERDTreeBookmarksFile)
                     hide
-                    call SmartNERDTreeBookmark()
+                    call s:SmartNERDTreeBookmark()
                     return
                 elseif matchstr(a:1, '[1-9]') != ''
                     let idx = a:1+2 > line('$') ? line('$') : a:1+2
@@ -707,56 +766,231 @@
             execute 'NERDTree ' . path
         endfunction
 
-        " Restore screen size and position
-        if has("gui_running")
-            function! ScreenFilename()
-                if has('win32') || has('win64')
-                    return $HOME . '/.cache/.vimsize'
+        function! s:WriteBookmraksFile()
+            if !filereadable(g:NERDTreeBookmarksFile)
+                silent! execute 'keepalt botright 1new'
+                silent! execute 'edit ' . g:NERDTreeBookmarksFile
+                silent! execute 'write!'
+                silent! execute 'wincmd q'
+                if !filereadable(g:NERDTreeBookmarksFile)
+                    echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't read!" | echohl None
+                    return
                 endif
-            endfunction
+            endif
+            if filewritable(g:NERDTreeBookmarksFile) == 0
+                echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't write!" | echohl None
+                return
+            endif
+            if !exists('s:bmContent')
+                let s:bmContent = readfile(g:NERDTreeBookmarksFile)
+            endif
+            call writefile(s:bmContent, g:NERDTreeBookmarksFile)
+        endfunction
+    " }}}2
 
-            function! ScreenRestore()
-                let f = ScreenFilename()
-                if has("gui_running") && g:screenSizeRestorePos && filereadable(f)
-                    let vimInstance = (g:screenSizeByVimInstance==1?(v:servername):'GVIM')
-                    for line in readfile(f)
-                        let sizepos = split(line)
-                        if len(sizepos) == 5 && sizepos[0] == vimInstance
-                            silent! execute "set columns=".sizepos[1]." lines=".sizepos[2]
-                            silent! execute "winpos ".sizepos[3]." ".sizepos[4]
-                            return
+    " Adjust window size and opacity {{{2
+        function! s:AdjustFrameAlpha(handle)
+            if !has('gui_running')
+                return
+            endif
+            if !exists('s:frameParams')
+                call s:InitFrameParams()
+            endif
+            let elem = split(s:frameParams)
+            if elem[0] == v:servername
+                let alpha = elem[2]+0
+                if a:handle == '+' && alpha < 255
+                    let alpha = alpha+1
+                endif
+                if a:handle == '-' && alpha > 0
+                    let alpha = alpha-1
+                endif
+                let s:frameParams = elem[0] . ' ' . elem[1] . ' ' . alpha . ' ' . &lines . ' ' . &columns . ' ' .
+                            \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
+                            \(getwinposy()<0 ? 0 : getwinposy())
+                call s:RestoreFrameParams()
+            endif
+        endfunction
+
+        function! s:AdjustFrameSize()
+            if !has('gui_running')
+                return
+            endif
+            if !exists('s:frameParams')
+                call s:InitFrameParams()
+            endif
+            let elem = split(s:frameParams)
+            if elem[0] == v:servername
+                let isMaximized = elem[1]+0 ? 0 : 1
+                let s:frameParams = elem[0] . ' ' . isMaximized . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
+                            \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
+                            \(getwinposy()<0 ? 0 : getwinposy())
+                call s:RestoreFrameParams()
+            endif
+        endfunction
+
+        function! s:InitFrameParams()
+            let s:frameParams = v:servername . ' 0 255 ' . &lines . ' ' . &columns . ' ' .
+                        \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
+                        \(getwinposy()<0 ? 0 : getwinposy())
+        endfunction
+
+        function! s:RestoreFrameParams()
+            let elem = split(s:frameParams)
+            if elem[0] == v:servername
+                if elem[1]+0
+                    call libcallnr("vimtweak.dll", "EnableMaximize", 1)
+                    call libcallnr("vimtweak.dll", "EnableCaption", 0)
+                else
+                    silent! execute 'set lines=' . elem[3] . ' columns=' . elem[4]
+                    silent! execute 'winpos ' . elem[5] . ' ' .  elem[6]
+                    call libcallnr("vimtweak.dll", "EnableCaption", 1)
+                    call libcallnr("vimtweak.dll", "EnableMaximize", 0)
+                endif
+                call libcallnr("vimtweak.dll", "SetAlpha", elem[2]+0)
+            endif
+        endfunction
+
+        function! s:WriteFrameParams()
+            if !filereadable($HOME.'/.cache/.vimsize')
+                silent! execute 'keepalt botright 1new'
+                silent! execute 'edit ' . $HOME.'/.cache/.vimsize'
+                silent! execute 'write!'
+                silent! execute 'wincmd q'
+                if !filereadable($HOME.'/.cache/.vimsize')
+                    echohl WarningMsg | echo ".vimsize can't read!" | echohl None
+                    return
+                endif
+            endif
+            if filewritable($HOME.'/.cache/.vimsize') == 0
+                echohl WarningMsg | echo ".vimsize can't write!" | echohl None
+                return
+            endif
+            let elem = split(s:frameParams)
+            if elem[0] == v:servername
+                let newFrameParams = elem[0] . ' ' . elem[1] . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
+                            \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
+                            \(getwinposy()<0 ? 0 : getwinposy())
+            endif
+            let content = readfile($HOME.'/.cache/.vimsize')
+            let content = filter(content, "v:val !~ '^".v:servername." '")
+            call add(content, newFrameParams)
+            call writefile(content, $HOME.'/.cache/.vimsize')
+        endfunction
+
+        function! s:ReadFrameParams()
+            if !filereadable($HOME.'/.cache/.vimsize')
+                silent! execute 'keepalt botright 1new'
+                silent! execute 'edit ' . $HOME.'/.cache/.vimsize'
+                silent! execute 'write!'
+                silent! execute 'wincmd q'
+                if !filereadable($HOME.'/.cache/.vimsize')
+                    echohl WarningMsg | echo ".vimsize can't read!" | echohl None
+                    return
+                endif
+            endif
+            let content = readfile($HOME.'/.cache/.vimsize')
+            let content = filter(content, "v:val =~ '^".v:servername." '")
+            if len(content) > 0
+                let s:frameParams = content[-1]
+            else
+                call s:InitFrameParams()
+            endif
+            call s:RestoreFrameParams()
+        endfunction
+    " }}}2
+
+    " Delete buffer while keeping window layout {{{2
+        function! s:Bclose(bang, buffer)
+            if empty(a:buffer)
+                let bTarget = bufnr('%')
+            elseif a:buffer =~ '^\d\+$'
+                " When a:buffer doesn't exist as number, try as string
+                let bTarget = bufnr(a:buffer+0)>0 ? bufnr(a:buffer+0) : bufnr(a:buffer)
+            else
+                let bTarget = bufnr(a:buffer)
+            endif
+            if bTarget < 0
+                echohl ErrorMsg | echo 'No matching buffer for Show the line and column number of the cursor position, separated by a' . a:buffer | echohl None
+                return
+            endif
+            if empty(a:bang) && getbufvar(bTarget, '&modified')
+                echohl WarningMsg | echo 'No write since last change for buffer ' . bTarget . ' (use :Bclose!)' | echohl None
+                return
+            endif
+            let wCurrent = winnr()
+            let wNums = filter(range(1, winnr('$')), 'winbufnr(v:val) == bTarget')
+            if len(wNums) > 0
+                for w in wNums
+                    " Check if exists buflisted alternative buffer
+                    let bAlternative = -1
+                    " Check if exists buflisted non-alternative buffer
+                    let bBuflistedMatch = -1
+                    " Check if exists nobuflisted unnamed buffer
+                    let bNobuflistedMatch = -1
+                    execute w . 'wincmd w'
+                    let maxBufNums = bufnr('$')
+                    for bufNum in range(1, maxBufNums)
+                        if buflisted(bufNum) && bufnr(bufNum) != bTarget
+                            if bufnr(bufNum) == bufnr('#')
+                                let bAlternative = bufnr(bufNum)
+                            else
+                                let bBuflistedMatch = bufnr(bufNum)
+                            endif
+                        endif
+                        if !buflisted(bufNum) && !strlen(bufname(bufNum)) && bufnr(bufNum) != bTarget
+                            let bNobuflistedMatch = bufnr(bufNum)
                         endif
                     endfor
-                endif
-            endfunction
-
-            function! ScreenSave()
-                if has("gui_running") && g:screenSizeRestorePos
-                    let vimInstance = (g:screenSizeByVimInstance==1?(v:servername):'GVIM')
-                    let data = vimInstance . ' ' . &columns . ' ' . &lines . ' ' .
-                                \ (getwinposx()<0?0:getwinposx()) . ' ' .
-                                \ (getwinposy()<0?0:getwinposy())
-                    let f = ScreenFilename()
-                    if filereadable(f)
-                        let lines = readfile(f)
-                        call filter(lines, "v:val !~ '^" . vimInstance . "\\>'")
-                        call add(lines, data)
-                    else
-                        let lines = [data]
+                    if bAlternative > 0
+                        execute 'buffer ' . bAlternative
+                        continue
                     endif
-                    call writefile(lines, f)
-                endif
-            endfunction
+                    if bBuflistedMatch > 0
+                        execute 'buffer ' . bBuflistedMatch
+                        continue
+                    endif
+                    if bNobuflistedMatch > 0
+                        execute 'buffer ' . bNobuflistedMatch
+                    else
+                        execute 'enew' . a:bang
+                    endif
+                    setlocal buflisted
+                    " Delete the unnamed buffer when switch to other one
+                    setlocal bufhidden=delete
+                endfor
+            endif
+            silent! execute 'bdelete' . a:bang . ' ' . bTarget
+            execute wCurrent . 'wincmd w'
+        endfunction
+    " }}}2
 
-            if !exists('g:screenSizeRestorePos')
-                let g:screenSizeRestorePos = 1
+    " Initialize directories {{{2
+        function! s:InitializeDirectories()
+            let parent = $HOME.'/.cache'
+            " backupdir -- directory for backup files
+            " viewdir -- directory for view files
+            " directory -- directory for swap files
+            " undodir -- directory for undo files
+            let dirList = {'backupdir' : 'backup', 'viewdir' : 'view', 'directory' : 'swap'}
+            if has('persistent_undo')
+                let dirList['undodir'] = 'undo'
             endif
-            if !exists('g:screenSizeByVimInstance')
-                let g:screenSizeByVimInstance = 1
-            endif
-            autocmd VimEnter * if g:screenSizeRestorePos == 1 | call ScreenRestore() | endif
-            autocmd VimLeavePre * if g:screenSizeRestorePos == 1 | call ScreenSave() | endif
-        endif
+            for [settingName, dirName] in items(dirList)
+                let dir = parent . '/' . dirName
+                if isdirectory(dir)
+                    execute 'set ' . settingName . '=' . escape(substitute(expand(dir), '\\', '/', 'g'), ' ')
+                    continue
+                else
+                    if exists('*mkdir')
+                        call mkdir(dir, 'p')
+                        execute 'set ' . settingName . '=' . escape(substitute(expand(dir), '\\', '/', 'g'), ' ')
+                    else
+                        echohl WarningMsg | echo 'Unable to create directory ' . dir . ' ,try to create manually.' | echohl None
+                    endif
+                endif
+            endfor
+        endfunction
     " }}}2
 
 " }}}1
