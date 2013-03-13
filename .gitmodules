@@ -1,0 +1,3 @@
+[submodule ".vim/scripts/scriptbundle"]
+	path = .vim/scripts/scriptbundle
+	url = git@github.com:BeyondIM/vim-script-bundle.git

@@ -1,8 +1,9 @@
-﻿" vim: set shiftwidth=4 tabstop=4 softtabstop=4 expandtab foldmarker={{{,}}} foldlevel=0 foldmethod=marker:
+﻿" This is BeyondIM's vim config.
+
 " Environment {{{1
 
     " Base {{{2
-        " Important
+        " Enable no Vi compatible commands
         set nocompatible
         " Set viminfo path
         set viminfo+=n$HOME/.cache/.viminfo
@@ -11,32 +12,32 @@
     " }}}2
 
     " Windows Compatible {{{2
-        if has('win32') || has('win64')
+        let s:isWin = has('win32') || has('win64')
+        if s:isWin
             set runtimepath=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
         endif
     " }}}2
 
     " Neobundle {{{2
         set runtimepath+=$HOME/.vim/bundle/neobundle.vim/
-        call neobundle#rc(expand('$HOME/.vim/bundle/'))
+        call neobundle#rc('$HOME/.vim/bundle/')
         " Let NeoBundle manage NeoBundle
         NeoBundleFetch 'Shougo/neobundle.vim'
         " colorscheme
         NeoBundle 'nanotech/jellybeans.vim'
         " enhancement
         NeoBundle 'kien/ctrlp.vim'
-        NeoBundleLazy 'godlygeek/tabular', {'autoload':{'commands':'Tabularize'}}
         NeoBundle 'tpope/vim-surround'
         NeoBundle 'tpope/vim-repeat'
         NeoBundle 'vim-scripts/YankRing.vim'
         NeoBundle 'scrooloose/nerdtree'
         NeoBundle 'scrooloose/nerdcommenter'
         NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
-        NeoBundle 'Lokaltog/powerline', {'rtp':$HOME.'/.vim/bundle/powerline/powerline/bindings/vim'}
         NeoBundle 'Lokaltog/vim-easymotion'
         " completion
-        NeoBundle 'SirVer/ultisnips'
-        NeoBundle 'Valloric/YouCompleteMe'
+        NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
+        NeoBundle 'Shougo/neosnippet'
+        NeoBundle 'honza/snipmate-snippets'
         " html
         NeoBundleLazy 'othree/html5.vim', {'autoload':{'filetypes':'html'}}
         NeoBundle 'Valloric/MatchTagAlways'
@@ -57,8 +58,23 @@
         NeoBundleLazy 'techlivezheng/phpctags', {'autoload':{'filetypes':'php'}}
         NeoBundleLazy 'techlivezheng/tagbar-phpctags', {'autoload':{'filetypes':'php'}}
         NeoBundle 'majutsushi/tagbar'
-        " syntax check
+        " syntax check & debug
         NeoBundle 'scrooloose/syntastic'
+        NeoBundle 'joonty/vdebug'
+    " }}}2
+
+    " Script {{{2
+        set runtimepath+=$HOME/.vim/scripts/scriptbundle/
+        "let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
+        let g:curlProxy = 'socks5://127.0.0.1:8888'
+        let g:sevenZipPath = 'd:/software/7-Zip/7z.exe'
+        call scriptbundle#rc()
+        " mark
+        Script '2666'
+        " matchit
+        Script '39'
+        " align
+        Script '294'
     " }}}2
 
 " }}}1
@@ -86,10 +102,10 @@
         set fileencodings=utf-8,prc,latin1
         scriptencoding utf-8
         " Set zh_CN.utf-8 as the standard language
-        language messages zh_CN.utf-8
+        language messages en_US.utf-8
         " Reload menu to show Chinese characters properly
-        source $VIMRUNTIME/delmenu.vim
-        source $VIMRUNTIME/menu.vim
+        "source $VIMRUNTIME/delmenu.vim
+        "source $VIMRUNTIME/menu.vim
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
         " Make a backup before overwriting a file
@@ -103,8 +119,9 @@
         " Disable beep and flash
         set noerrorbells visualbell t_vb=
         " With a map leader it's possible to do extra key combinations
-        let mapleader=","
+        let g:maplocalleader="\\"
         let g:mapleader=","
+        let mapleader=","
     " }}}2
 
     " UI {{{2
@@ -161,6 +178,8 @@
         set formatoptions+=l
         " Don't break lines after one-letter words, if possible
         set formatoptions+=1
+        " Don't show the preview window
+        set completeopt-=preview
 
         " Set extra options when running in GUI mode
         if has("gui_running")
@@ -222,18 +241,26 @@
         " Highlight current line when in insert mode
         autocmd InsertLeave * set nocursorline
         autocmd InsertEnter * set cursorline
+        "if g:colors_name == 'jellybeans'
+            "autocmd VimEnter * highlight CursorLine guibg=#363636
+        "endif
 
         " Fast source $MYVIMRC
         autocmd BufWritePost .vimrc nested source $MYVIMRC
 
         " Return to last edit position when opening files
-        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | execute "normal! g`\"" | endif
 
         " Set working directory to the current file
-        "autocmd BufEnter * if expand("%:p:h") !~ '^C:\\Windows\\system32' | silent! lcd %:p:h | endif
+        autocmd BufEnter * if s:isWin && expand("%:p:h") !~ '\c^C:\\Windows\\system32' ||
+                    \!s:isWin && expand("%:p:h") !~ '/tmp' |
+                    \silent! lcd %:p:h |
+                    \endif
 
         " OmniComplete
-        autocmd filetype * if exists('+omnifunc') && &omnifunc == '' | setlocal omnifunc=syntaxcomplete#Complete | endif
+        autocmd filetype * if exists('+omnifunc') && &omnifunc == '' |
+                    \setlocal omnifunc=syntaxcomplete#Complete |
+                    \endif
 
         " Customize indent style
         autocmd FileType javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
@@ -274,28 +301,30 @@
         nnoremap N Nzzzv
 
         " Fast saving
-        nnoremap <leader>w :<C-U>w!<CR>
+        nnoremap <Leader>w :<C-U>w!<CR>
 
         " Toggle search highlighting
-        nnoremap <silent> <leader>/ :set hlsearch! hlsearch?<CR>
+        nnoremap <silent> <LocalLeader>/ :set hlsearch! hlsearch?<CR>
 
         " Toggle menubar
-        nnoremap <silent> <leader><leader>m :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>else<BAR>set guioptions+=m<BAR>endif<CR>
+        nnoremap <silent> <LocalLeader>m :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>
+                    \else<BAR>set guioptions+=m<BAR>
+                    \endif<CR>
 
         " Invert 'foldenable'
-        nnoremap <leader>fe :set foldenable! foldenable?<CR>
+        nnoremap <LocalLeader>= :set foldenable! foldenable?<CR>
 
         " Quickly set foldlevel
-        nnoremap <leader>f0 :set foldlevel=0<CR>
-        nnoremap <leader>f1 :set foldlevel=1<CR>
-        nnoremap <leader>f2 :set foldlevel=2<CR>
-        nnoremap <leader>f3 :set foldlevel=3<CR>
-        nnoremap <leader>f4 :set foldlevel=4<CR>
-        nnoremap <leader>f5 :set foldlevel=5<CR>
-        nnoremap <leader>f6 :set foldlevel=6<CR>
-        nnoremap <leader>f7 :set foldlevel=7<CR>
-        nnoremap <leader>f8 :set foldlevel=8<CR>
-        nnoremap <leader>f9 :set foldlevel=9<CR>
+        nnoremap <LocalLeader>0 :set foldlevel=0<CR>
+        nnoremap <LocalLeader>1 :set foldlevel=1<CR>
+        nnoremap <LocalLeader>2 :set foldlevel=2<CR>
+        nnoremap <LocalLeader>3 :set foldlevel=3<CR>
+        nnoremap <LocalLeader>4 :set foldlevel=4<CR>
+        nnoremap <LocalLeader>5 :set foldlevel=5<CR>
+        nnoremap <LocalLeader>6 :set foldlevel=6<CR>
+        nnoremap <LocalLeader>7 :set foldlevel=7<CR>
+        nnoremap <LocalLeader>8 :set foldlevel=8<CR>
+        nnoremap <LocalLeader>9 :set foldlevel=9<CR>
 
         " Toggle wrap lines
         nnoremap <silent> <F2> :set wrap! wrap?<CR>
@@ -306,7 +335,10 @@
         xmap <F2> <Esc><F2>gv
 
         " Toggle ignore whitespace when diff
-        nnoremap <leader>dw :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>else<BAR>set diffopt+=iwhite<BAR>endif<BAR>set diffopt?<CR>
+        nnoremap <LocalLeader>iw :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>
+                    \else<BAR>set diffopt+=iwhite<BAR>
+                    \endif<BAR>
+                    \set diffopt?<CR>
 
         " Don't jump when using * for search
         nnoremap * *<c-o>
@@ -332,20 +364,28 @@
 
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
-        let NERDTreeIgnore=['\~$', '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$']
+        let s:ignoreExtension1 = 'lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz'
+        let s:ignoreExtension2 = 'exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\='
+        let NERDTreeIgnore=['\c\.\(' . s:ignoreExtension1 . '\|' .
+                        \(s:isWin ? s:ignoreExtension2 : "") .
+                        \'\)$']
         let NERDTreeBookmarksFile = $HOME.'/.cache/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
     " }}}2
 
     " CtrlP {{{2
-        nnoremap <silent> <leader>ff :<C-U>CtrlP<CR>
+        nnoremap <silent> <Leader>ff :<C-U>CtrlP<CR>
         nnoremap <silent> <Leader>fr :<C-U>CtrlPMRU<CR>
-        nnoremap <silent> <leader>bb :<C-U>CtrlPBuffer<CR>
+        nnoremap <silent> <Leader>b :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
-                    \ 'dir' : '\c^\(c:\\Windows\|c:\\Users\\Administrator\)',
-                    \ 'file' : '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$',
-                    \ }
+                    \'dir' : '\c^\(' .
+                        \(s:isWin ? 'c:\\Windows\\\|c:\\Users\\[^\\]\+\\' : "") .
+                    \'\)',
+                    \'file' : '\c\.\(' . s:ignoreExtension1 . '\|' .
+                        \(s:isWin ? s:ignoreExtension2 : "") .
+                        \'\)$'
+                    \}
         let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp'
     " }}}2
 
@@ -369,7 +409,7 @@
     " }}}2
 
     " Gundo {{{2
-        nnoremap <leader>u :GundoToggle<CR>
+        nnoremap <Leader>u :GundoToggle<CR>
         let g:gundo_width = 30
         let g:gundo_preview_bottom = 1
         let g:gundo_tree_statusline = 'Gundo'
@@ -377,7 +417,7 @@
     " }}}2
 
     " Tagbar {{{2
-        nnoremap <silent> <leader>tt :TagbarToggle<CR>
+        nnoremap <silent> <Leader>t :TagbarToggle<CR>
         let g:tagbar_ctags_bin = $HOME.'/bin/ctags58/ctags.exe'
         let g:tagbar_systemenc = 'cp936'
         let g:tagbar_autofocus = 1
@@ -399,16 +439,96 @@
         let g:syntastic_warning_symbol='!!'
         let g:syntastic_style_warning_symbol='S!'
         let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
-        let g:syntastic_php_phpcs_args='--tab-width=4 --report=csv'
+        let g:syntastic_php_phpcs_args='--tab-width=4 --standard=Zend --report=csv'
         let g:syntastic_javascript_checkers=['jslint']
     " }}}2
 
-    " Ultisnips {{{2
-        let g:UltiSnipsExpandTrigger='<C-space>'
-    "}}}2
+    " Neocomplcache {{{2
+        let g:neocomplcache_enable_at_startup = 1
+        let g:neocomplcache_enable_smart_case = 1
+        " Use camel case completion
+        let g:neocomplcache_enable_camel_case_completion = 1
+        " Use underscore completion
+        let g:neocomplcache_enable_underbar_completion = 1
+        let g:neocomplcache_use_vimproc = 1
+        let g:neocomplcache_min_syntax_length = 3
+        let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
+        let s:protectedBufnameStr = '^\[SmartNERDTreeBookmark\]\|\[YankRing\]\|__Gundo_\|__Tagbar__\|NERD_tree_\|ControlP'
+        let g:neocomplcache_lock_buffer_name_pattern = s:protectedBufnameStr
 
-    " Youcompleteme {{{2
-        let g:ycm_key_invoke_completion = '<leader>ic'
+        " Define keyword, for minor languages
+        if !exists('g:neocomplcache_keyword_patterns')
+            let g:neocomplcache_keyword_patterns = {}
+        endif
+        let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
+
+        " key mappings
+        inoremap <expr><C-g> neocomplcache#undo_completion()
+        inoremap <expr><C-l> neocomplcache#complete_common_string()
+        inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
+        inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
+
+        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
+
+        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
+                    \ pumvisible() ? neocomplcache#close_popup() : "\<CR>"
+
+        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+
+        " Enable omni completion
+        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+
+        " For snippet_complete marker
+        if has('conceal')
+            set conceallevel=2 concealcursor=i
+        endif
+
+        "Use snipmate snippets
+        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/snipmate-snippets/snippets'
+        let g:neosnippet#enable_snipmate_compatibility = 1
+    " }}}2
+
+    " MatchTagAlways {{{2
+        let g:mta_use_matchparen_group = 0
+        let g:mta_set_default_matchtag_color = 1
+        autocmd filetype html autocmd BufEnter * highlight clear MatchTag |
+                    \highlight MatchTag guifg=#990024 gui=bold,italic
+    " }}}2
+
+    " Vdebug {{{2
+        let g:vdebug_keymap = {
+                    \    "run" : "<Leader><F5>",
+                    \    "run_to_cursor" : "<Leader><F1>",
+                    \    "step_over" : "<Leader><F2>",
+                    \    "step_into" : "<Leader><F3>",
+                    \    "step_out" : "<Leader><F4>",
+                    \    "close" : "<Leader><F6>",
+                    \    "detach" : "<Leader><F7>",
+                    \    "set_breakpoint" : "<Leader><F10>",
+                    \    "get_context" : "<Leader><F11>",
+                    \    "eval_under_cursor" : "<Leader><F12>",
+                    \}
+    " }}}2
+
+    " Mark {{{2
+        let g:mwDefaultHighlightingPalette = 'extended'
+        nmap <Leader>mm <Plug>MarkSet
+        xmap <Leader>mm <Plug>MarkSet
+        nmap <Leader>mr <Plug>MarkRegex
+        xmap <Leader>mr <Plug>MarkRegex
+        nmap <Leader>mn <Plug>MarkClear
+        nmap <Leader>mt <Plug>MarkToggle
+        nmap <Leader>mc <Plug>MarkAllClear
+        nmap <Leader>m* <Plug>MarkSearchCurrentNext
+        nmap <Leader>m# <Plug>MarkSearchCurrentPrev
+        nmap <Leader>m/ <Plug>MarkSearchAnyNext
+        nmap <Leader>m? <Plug>MarkSearchAnyPrev
+        nmap <Plug>IgnoreMarkSearchNext <Plug>MarkSearchNext
+        nmap <Plug>IgnoreMarkSearchPrev <Plug>MarkSearchPrev
     " }}}2
 
 " }}}1
@@ -475,6 +595,31 @@
         nnoremap <space> :<C-U>call ToggleFold()<CR>
     " }}}2
 
+    " Auto open folding in predefined range around cursor when inserting {{{2
+        function! OpenFoldWhenInserting(range)
+            let l:range = a:range+0
+            let l:line = line('.')
+            let l:oldWinline = winline()
+            silent! execute (l:line-l:range).','.(l:line+l:range).'foldopen!'
+            let l:newWinline = winline()
+            let l:scrollNum = l:newWinline-l:oldWinline
+            if l:scrollNum < 0
+                while l:scrollNum < 0
+                    call feedkeys("\<C-x>\<C-y>")
+                    let l:scrollNum+=1
+                endwhile
+            endif
+            if l:line > &scrolloff && l:scrollNum > 0
+                while l:scrollNum > 0
+                    call feedkeys("\<C-x>\<C-e>")
+                    let l:scrollNum-=1
+                endwhile
+            endif
+        endfunction
+
+        autocmd InsertEnter * call OpenFoldWhenInserting(10)
+    " }}}2
+
     " Customize foldtext {{{2
         function! CustomFoldtext()
             let indent = repeat(' ', indent(v:foldstart))
@@ -512,12 +657,12 @@
                 endif
             endif
             " fold codes when setting foldmarker as {,}
-            if match(startLine, '{\+\d\=\ze[ \t]*$') != -1 && match(endLine, '^[ \t"]*\zs}\+\d\=') != -1
-                let startBracket = matchstr(startLine, '{\+\d\=\ze[ \t]*$')
-                let temp = substitute(startLine, '{\+\d\=[ \t]*$', '', '')
+            if match(startLine, '{\+\d\=\ze[^{}]*$') != -1 && match(endLine, '}\+\d\=\ze[^{}]*$') != -1
+                let startBracket = matchstr(startLine, '{\+\d\=\ze[^{}]*$')
+                let temp = substitute(startLine, '{\+\d\=[^{}]*$', '', '')
                 let startStr = substitute(temp, '^\t\+', indent, '')
-                let endBracket = matchstr(endLine, '^[ \t"]*\zs}\+\d\=')
-                let endStr = substitute(endLine, '^[ \t"]*}\+\d\=', '', '')
+                let endBracket = matchstr(endLine, '}\+\d\=\ze[^{}]*$')
+                let endStr = substitute(endLine, '^.*}\+\d\=', '', '')
                 let text = startStr . startBracket . '...' . endBracket . endStr
                 let expansionWidth = windowWidth - strwidth(text.foldSizeStr.foldPercentage.foldLevelStr)
                 if expansionWidth > 0
@@ -552,8 +697,8 @@
         set foldtext=CustomFoldtext()
 
         " Quickly set foldmethod
-        nnoremap <silent> <leader>fc :<C-U>setlocal foldmethod=marker foldmarker={,} foldtext=CustomFoldtext()<CR>
-        nnoremap <silent> <leader>fv :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
+        nnoremap <silent> <LocalLeader>c :<C-U>setlocal foldmethod=marker foldmarker={,} foldtext=CustomFoldtext()<CR>
+        nnoremap <silent> <LocalLeader>v :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
     " }}}2
 
     " Smart NERDTree bookmarks list {{{2
@@ -572,7 +717,9 @@
             if !exists('s:bmContent')
                 let s:bmContent = readfile(g:NERDTreeBookmarksFile)
             endif
-            let desc = repeat(' ', 3) . '1-9 or CR = open, a = add, d = delete, D = delete all, e = edit, q or ESC = quit' . repeat(' ', 3)
+            let desc = repeat(' ', 3) .
+                        \'1-9 or CR = open, a = add, d = delete, D = delete all, e = edit, q or ESC = quit' .
+                        \repeat(' ', 3)
             let desc = desc . "\n" . repeat('-', strlen(desc))
             " get the max len of bookmark name
             let nameMaxLen = 0
@@ -665,7 +812,7 @@
                     let path = input('Directory to bookmark: ', '', 'dir')
                     if path != ''
                         let path = substitute(path, '\\ ', ' ', 'g')
-                        let path = substitute(path, '\\$', '', '')
+                        let path = substitute(path, '[\\/]$', '', '')
                     else
                         return
                     endif
@@ -704,10 +851,11 @@
                     if line('.') > 2
                         let name = substitute(getline('.'), '^\%([1-9]\.\)\= *\(.\{-1,}\) *=> .\+$', '\1', '')
                         let path = substitute(getline('.'), '^\%([1-9]\.\)\= *.\{-1,} *=> \(.\+\)$', '\1', '')
-                        let newPath = input('Change directory to bookmark: ', escape(path, ' ') . '\', 'dir')
+                        let newPath = input('Change directory to bookmark: ', escape(path, ' ') .
+                                    \(s:isWin ? '\' : '/'), 'dir')
                         if newPath != ''
                             let newPath = substitute(newPath, '\\ ', ' ', 'g')
-                            let newPath = substitute(newPath, '\\$', '', '')
+                            let newPath = substitute(newPath, '[\\/]$', '', '')
                         else
                             let newPath = path
                         endif
@@ -733,7 +881,7 @@
                 let idx = line('.') > 2 ? line('.') : 3
             endif
             let path = substitute(getline(idx), '^\%([1-9]\.\)\= *.\{-1,} *=> \(.\+\)$', '\1', '')
-            let path = escape(path, ' ') . '\'
+            let path = escape(path, ' ') . (s:isWin ? '\' : '/')
             hide
             execute 'NERDTree ' . path
         endfunction
@@ -762,7 +910,7 @@
         " Save bookmark when leaving
         autocmd VimLeavePre * call s:WriteBookmraksFile()
 
-        nnoremap <silent> <leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
+        nnoremap <silent> <Leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
     " }}}2
 
     " Adjust window size and opacity {{{2
@@ -895,11 +1043,15 @@
                 let bTarget = bufnr(a:buffer)
             endif
             if bTarget < 0
-                echohl ErrorMsg | echo 'No matching buffer for Show the line and column number of the cursor position, separated by a' . a:buffer | echohl None
+                echohl ErrorMsg
+                echo 'No matching buffer for Show the line and column number of the cursor position, separated by a' . a:buffer
+                echohl None
                 return
             endif
             if empty(a:bang) && getbufvar(bTarget, '&modified')
-                echohl WarningMsg | echo 'No write since last change for buffer ' . bTarget . ' (use :DeleteBuffer!)' | echohl None
+                echohl WarningMsg
+                echo 'No write since last change for buffer ' . bTarget . ' (use :DeleteBuffer!)'
+                echohl None
                 return
             endif
             let wCurrent = winnr()
@@ -947,14 +1099,13 @@
             execute wCurrent . 'wincmd w'
         endfunction
 
-        function! s:BHClose()
+        function! s:BCloseHidden()
             let total = 0
-            let protectedBufnameStr = '^\[SmartNERDTreeBookmark\]\|\[YankRing\]\|__Gundo_\|__Tagbar__\|NERD_tree_\|ControlP'
             let wCurrent = winnr()
             for w in range(1, winnr('$'))
                 execute w . 'wincmd w'
                 for bufNum in range(1, bufnr('$'))
-                    if bufloaded(bufNum) && !buflisted(bufNum) && match(bufname(bufNum), protectedBufnameStr) == -1
+                    if bufloaded(bufNum) && !buflisted(bufNum) && match(bufname(bufNum), s:protectedBufnameStr) == -1
                         execute 'bwipeout! ' . bufNum
                         let total = total + 1
                     endif
@@ -969,10 +1120,10 @@
         endfunction
 
         command! -bang -complete=buffer -nargs=? BClose call s:BClose('<bang>', '<args>')
-        nnoremap <silent> <Leader>bc :BClose<CR>
+        nnoremap <silent> <LocalLeader>bc :BClose<CR>
 
-        command! -bang BHClose call s:BHClose()
-        nnoremap <silent> <Leader>bhc :BHClose<CR>
+        command! -bang BCloseHidden call s:BCloseHidden()
+        nnoremap <silent> <LocalLeader>bh :BCloseHidden<CR>
     " }}}2
 
     " Remaps arrow keys to indent/unindent and add/remove blank lines {{{2
@@ -1061,12 +1212,12 @@
             for [settingName, dirName] in items(dirList)
                 let dir = parent . '/' . dirName
                 if isdirectory(dir)
-                    execute 'set ' . settingName . '=' . escape(substitute(expand(dir), '\\', '/', 'g'), ' ')
+                    execute 'set ' . settingName . '=' . dir
                     continue
                 else
                     if exists('*mkdir')
                         call mkdir(dir, 'p')
-                        execute 'set ' . settingName . '=' . escape(substitute(expand(dir), '\\', '/', 'g'), ' ')
+                        execute 'set ' . settingName . '=' . dir
                     else
                         echohl WarningMsg | echo 'Unable to create directory ' . dir . ' ,try to create manually.' | echohl None
                     endif
@@ -1074,7 +1225,9 @@
             endfor
         endfunction
 
-        autocmd VimEnter * call s:InitializeDirectories()
+        call s:InitializeDirectories()
     " }}}2
 
 " }}}1
+
+" vim: set shiftwidth=4 tabstop=4 softtabstop=4 expandtab foldmethod=marker:
