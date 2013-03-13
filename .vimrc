@@ -4,12 +4,6 @@
     " Base {{{2
         " Important
         set nocompatible
-        " Set environment variable
-        if has('win32') || has('win64')
-            let $HOME = escape(substitute(expand($HOME), '\\', '/', 'g'), ' ')
-            let $VIM  = escape(substitute(expand($VIM), '\\', '/', 'g'), ' ')
-            let $VIMRUNTIME = escape(substitute(expand($VIMRUNTIME), '\\', '/', 'g'), ' ')
-        endif
         " Set viminfo path
         set viminfo+=n$HOME/.cache/.viminfo
         " Remove all autocommands to avoid sourcing them twice
@@ -31,28 +25,31 @@
         NeoBundle 'nanotech/jellybeans.vim'
         " enhancement
         NeoBundle 'kien/ctrlp.vim'
-        NeoBundle 'myusuf3/numbers.vim'
         NeoBundleLazy 'godlygeek/tabular', {'autoload':{'commands':'Tabularize'}}
         NeoBundle 'tpope/vim-surround'
         NeoBundle 'tpope/vim-repeat'
         NeoBundle 'vim-scripts/YankRing.vim'
         NeoBundle 'scrooloose/nerdtree'
         NeoBundle 'scrooloose/nerdcommenter'
-        NeoBundle 'mbbill/undotree'
+        NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
+        NeoBundle 'Lokaltog/powerline', {'rtp':$HOME.'/.vim/bundle/powerline/powerline/bindings/vim'}
+        NeoBundle 'Lokaltog/vim-easymotion'
         " completion
-        NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
-        NeoBundle 'Shougo/neosnippet'
-        NeoBundle 'honza/snipmate-snippets'
+        NeoBundle 'SirVer/ultisnips'
+        NeoBundle 'Valloric/YouCompleteMe'
         " html
         NeoBundleLazy 'othree/html5.vim', {'autoload':{'filetypes':'html'}}
+        NeoBundle 'Valloric/MatchTagAlways'
         " css
         NeoBundleLazy 'lepture/vim-css', {'autoload':{'filetypes':'css'}}
+        NeoBundleLazy 'ap/vim-css-color', {'autoload':{'filetypes':'css'}}
         " php
         NeoBundleLazy 'spf13/PIV', {'autoload':{'filetypes':'php'}}
         " javascript
         NeoBundleLazy 'pangloss/vim-javascript', {'autoload':{'filetypes':'javascript'}}
         " markdown
         NeoBundleLazy 'tpope/vim-markdown', {'autoload':{'filetypes':'markdown'}}
+        NeoBundleLazy 'waylan/vim-markdown-extra-preview', {'autoload':{'commands':['Me','Mer']}}
         " gist
         NeoBundleLazy 'mattn/gist-vim', {'depends':'mattn/webapi-vim', 'autoload':{'commands':'Gist'}}
         " tags
@@ -60,6 +57,8 @@
         NeoBundleLazy 'techlivezheng/phpctags', {'autoload':{'filetypes':'php'}}
         NeoBundleLazy 'techlivezheng/tagbar-phpctags', {'autoload':{'filetypes':'php'}}
         NeoBundle 'majutsushi/tagbar'
+        " syntax check
+        NeoBundle 'scrooloose/syntastic'
     " }}}2
 
 " }}}1
@@ -101,57 +100,67 @@
         endif
         " Use * register for copy-paste
         set clipboard=unnamed
-        " No annoying sound on error
-        set noerrorbells
-        set novisualbell
-        set t_vb=
+        " Disable beep and flash
+        set noerrorbells visualbell t_vb=
         " With a map leader it's possible to do extra key combinations
         let mapleader=","
         let g:mapleader=","
     " }}}2
 
     " UI {{{2
-        " Set numberwidth
+        " Set number
+        set number
         set numberwidth=6
         " Minimum lines to keep above and below cursor
         set scrolloff=3
         " Turn on the wild menu, show list instead of just completing
         set wildmenu
         " Ignore custom files
-        set wildignore=*/.git/*,*/.DS_Store
+        set wildignore+=*/.git/*,*/.DS_Store
         " Always show current position
         set ruler
-        " Set status line format
+        " Always show statusline
         set laststatus=2
-        set statusline=[b%n]\ [%{getcwd()}]\ %f\ %m\ %r
-        set statusline+=\ [%{strlen(&fileencoding)?&fileencoding:'none'},%{&fileformat}]
-        set statusline+=%=L:\ %l/%L[%p%%]\ C:\ %c
         " Configure backspace so it acts as it should act
         set backspace=eol,start,indent
         set whichwrap+=<,>,h,l
         " Ignore case when searching
         set ignorecase
+        " Set search highlighting
+        set hlsearch
         " When searching try to be smart about cases
         set smartcase
         " Makes search act like search in modern browsers
         set incsearch
+        " Wrap long lines
+        set wrap
         " Show matching brackets when text indicator is over them
         set showmatch
         set matchtime=3
         " Specifies for which type of commands folds will be opened
         set foldopen=block,hor,insert,mark,percent,quickfix,search,tag,undo
-        " Set foldtext
-        set foldtext=CustomFoldtext()
         " Jump to the first open window that contains the specified buffer when switching
         set switchbuf=useopen
         " Allow virtual editing in Visual block mode
         set virtualedit+=block
         " Abbrev. of messages (avoids 'hit enter')
         set shortmess+=filmnrxoOtT
+        " Don't show mode
+        set noshowmode
         " Pause listings when the screen is full
         set more
         " Start a dialog when a command fails
         set confirm
+        " Ignore changes in amount of white space
+        set diffopt-=iwhite
+        " Recognize numbered lists when autoindenting
+        set formatoptions+=n
+        " Use second line of paragraph when autoindenting
+        set formatoptions+=2
+        " Don't break long lines in insert mode
+        set formatoptions+=l
+        " Don't break lines after one-letter words, if possible
+        set formatoptions+=1
 
         " Set extra options when running in GUI mode
         if has("gui_running")
@@ -169,7 +178,7 @@
             set guioptions-=l
             set guioptions-=L
             set t_co=256
-            set guifont=Consolas:h12:cANSI
+            set guifont=Consolas_for_Powerline:h12:cANSI
             set guifontwide=Yahei_Mono:h11
             " don't use ALT key to activate menu
             set winaltkeys=no
@@ -196,10 +205,124 @@
         set autoindent
         " Smart indent
         set smartindent
+        " Don't show listchars by default
+        set nolist
         " Highlight problematic whitespace
         set listchars=tab:»-,trail:·,eol:¬,nbsp:×,precedes:«,extends:»
         " String to put at the start of lines that have been wrapped
-        set showbreak=└
+        set showbreak=Г
+    " }}}2
+
+" }}}1
+
+
+" Commands, key mapping {{{1
+
+    " Commands {{{2
+        " Highlight current line when in insert mode
+        autocmd InsertLeave * set nocursorline
+        autocmd InsertEnter * set cursorline
+
+        " Fast source $MYVIMRC
+        autocmd BufWritePost .vimrc nested source $MYVIMRC
+
+        " Return to last edit position when opening files
+        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+
+        " Set working directory to the current file
+        "autocmd BufEnter * if expand("%:p:h") !~ '^C:\\Windows\\system32' | silent! lcd %:p:h | endif
+
+        " OmniComplete
+        autocmd filetype * if exists('+omnifunc') && &omnifunc == '' | setlocal omnifunc=syntaxcomplete#Complete | endif
+
+        " Customize indent style
+        autocmd FileType javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
+
+        " Resize splits when the window is resized
+        autocmd VimResized * execute "normal! \<c-w>="
+
+        " Diff orig file
+        if !exists(":DiffOrig")
+            command DiffOrig vnew | set buftype=nofile | r # | 0d_ | diffthis | wincmd p | diffthis
+        endif
+
+        " Append date/time
+        command! -nargs=0 AppendNow  :execute "normal a".strftime("%c")
+        command! -nargs=0 AppendDate :execute "normal a".strftime("%Y-%m-%d")
+        command! -nargs=0 AppendTime :execute "normal a".strftime("%H:%M")
+        command! -nargs=0 AppendDateTime :execute "normal a".strftime("%Y-%m-%d %H:%M")
+        " }}}2
+
+    " Key mappings {{{2
+        " Wrapped lines goes down/up to next row, rather than next line in file
+        nnoremap j gj
+        nnoremap k gk
+        " Visual shifting (does not exit Visual mode)
+        vnoremap < <gv
+        vnoremap > >gv
+        " Easier movement between windows
+        nnoremap <M-h> <C-W>h<C-W>_
+        nnoremap <M-j> <C-W>j<C-W>_
+        nnoremap <M-k> <C-W>k<C-W>_
+        nnoremap <M-l> <C-W>l<C-W>_
+        " Other windows keymapping
+        nnoremap <M-o> <C-W>o
+        nnoremap <M-q> <C-W>q
+
+        " Keep search matches in the middle of the window.
+        nnoremap n nzzzv
+        nnoremap N Nzzzv
+
+        " Fast saving
+        nnoremap <leader>w :<C-U>w!<CR>
+
+        " Toggle search highlighting
+        nnoremap <silent> <leader>/ :set hlsearch! hlsearch?<CR>
+
+        " Toggle menubar
+        nnoremap <silent> <leader><leader>m :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>else<BAR>set guioptions+=m<BAR>endif<CR>
+
+        " Invert 'foldenable'
+        nnoremap <leader>fe :set foldenable! foldenable?<CR>
+
+        " Quickly set foldlevel
+        nnoremap <leader>f0 :set foldlevel=0<CR>
+        nnoremap <leader>f1 :set foldlevel=1<CR>
+        nnoremap <leader>f2 :set foldlevel=2<CR>
+        nnoremap <leader>f3 :set foldlevel=3<CR>
+        nnoremap <leader>f4 :set foldlevel=4<CR>
+        nnoremap <leader>f5 :set foldlevel=5<CR>
+        nnoremap <leader>f6 :set foldlevel=6<CR>
+        nnoremap <leader>f7 :set foldlevel=7<CR>
+        nnoremap <leader>f8 :set foldlevel=8<CR>
+        nnoremap <leader>f9 :set foldlevel=9<CR>
+
+        " Toggle wrap lines
+        nnoremap <silent> <F2> :set wrap! wrap?<CR>
+
+        " Toggle listchars
+        nnoremap <silent> <F3> :set list! list?<CR>
+        imap <F2> <C-O><F2>
+        xmap <F2> <Esc><F2>gv
+
+        " Toggle ignore whitespace when diff
+        nnoremap <leader>dw :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>else<BAR>set diffopt+=iwhite<BAR>endif<BAR>set diffopt?<CR>
+
+        " Don't jump when using * for search
+        nnoremap * *<c-o>
+
+        " Search for selected text, forwards or backwards.
+        vnoremap <silent> * :<C-U>
+                    \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
+                    \gvy/<C-R><C-R>=substitute(escape(@", '/\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
+                    \gV:call setreg('"', old_reg, old_regtype)<CR>
+        vnoremap <silent> # :<C-U>
+                    \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
+                    \gvy?<C-R><C-R>=substitute(escape(@", '?\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
+                    \gV:call setreg('"', old_reg, old_regtype)<CR>
+
+        " Substitute visual selection
+        xnoremap & "*y<Esc>:<c-u>%s/<c-r>=substitute(escape(@*, '\/.*$^~['), "\n", '\\n', "g")<CR>//gc<LEFT><LEFT><LEFT>
     " }}}2
 
 " }}}1
@@ -207,24 +330,18 @@
 
 " Plugins {{{1
 
-    " Numbers {{{2
-        nnoremap <F4> :NumbersToggle<CR>
-    " }}}2
-
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
         let NERDTreeIgnore=['\~$', '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$']
         let NERDTreeBookmarksFile = $HOME.'/.cache/.NERDTreeBookmarks'
-        let NERDTreeDirArrows = 1
         let NERDTreeAutoDeleteBuffer = 1
-        nnoremap <silent> <leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
     " }}}2
 
     " CtrlP {{{2
         nnoremap <silent> <leader>ff :<C-U>CtrlP<CR>
         nnoremap <silent> <Leader>fr :<C-U>CtrlPMRU<CR>
-        nnoremap <silent> <leader>b :<C-U>CtrlPBuffer<CR>
+        nnoremap <silent> <leader>bb :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
                     \ 'dir' : '\c^\(c:\\Windows\|c:\\Users\\Administrator\)',
                     \ 'file' : '\c\.\(exe\|com\|so\|dll\|sys\|ocx\|dat\|drv\|rom\|ax\|db\|pdf\|jpe\=g\|png\|gif\|docx\=\|xlsx\=\|pptx\=\|dwg\|zip\|rar\|7z\)$',
@@ -251,64 +368,16 @@
         let g:html_indent_style1 = "inc"
     " }}}2
 
-    " Undotree {{{2
-        nnoremap <leader>u :UndotreeToggle<CR>
-        let g:undotree_SetFocusWhenToggle = 1
-    " }}}2
-
-    " Neocomplcache {{{2
-        let g:acp_enableAtStartup = 0
-        let g:neocomplcache_enable_at_startup = 1
-        let g:neocomplcache_enable_smart_case = 1
-        " Use camel case completion
-        let g:neocomplcache_enable_camel_case_completion = 1
-        " Use underscore completion
-        let g:neocomplcache_enable_underbar_completion = 1
-        let g:neocomplcache_use_vimproc = 1
-        let g:neocomplcache_min_syntax_length = 3
-        let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
-
-        " Define keyword, for minor languages
-        if !exists('g:neocomplcache_keyword_patterns')
-            let g:neocomplcache_keyword_patterns = {}
-        endif
-        let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
-
-        " key mappings
-        inoremap <expr><C-g> neocomplcache#undo_completion()
-        inoremap <expr><C-l> neocomplcache#complete_common_string()
-        inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
-        inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
-
-        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
-
-        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
-                    \ pumvisible() ? neocomplcache#close_popup() : "\<CR>"
-
-        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
-        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
-
-        snoremap <C-h> "\<C-h>"
-        snoremap <BS> "\<C-h>"
-
-        " Enable omni completion
-        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-
-        " For snippet_complete marker
-        if has('conceal')
-            set conceallevel=2 concealcursor=i
-        endif
-
-        "Use snipmate snippets
-        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/snipmate-snippets/snippets'
-        let g:neosnippet#enable_snipmate_compatibility = 1
+    " Gundo {{{2
+        nnoremap <leader>u :GundoToggle<CR>
+        let g:gundo_width = 30
+        let g:gundo_preview_bottom = 1
+        let g:gundo_tree_statusline = 'Gundo'
+        let g:gundo_preview_statusline = 'Gundo Preview'
     " }}}2
 
     " Tagbar {{{2
-        nnoremap <silent> <leader>t :TagbarToggle<CR>
+        nnoremap <silent> <leader>tt :TagbarToggle<CR>
         let g:tagbar_ctags_bin = $HOME.'/bin/ctags58/ctags.exe'
         let g:tagbar_systemenc = 'cp936'
         let g:tagbar_autofocus = 1
@@ -324,131 +393,22 @@
                     \ }
     " }}}2
 
-" }}}1
+    " Syntastic {{{2
+        let g:syntastic_error_symbol='ХХ'
+        let g:syntastic_style_error_symbol='SХ'
+        let g:syntastic_warning_symbol='!!'
+        let g:syntastic_style_warning_symbol='S!'
+        let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
+        let g:syntastic_php_phpcs_args='--tab-width=4 --report=csv'
+        let g:syntastic_javascript_checkers=['jslint']
+    " }}}2
 
+    " Ultisnips {{{2
+        let g:UltiSnipsExpandTrigger='<C-space>'
+    "}}}2
 
-" Commands, key mapping {{{1
-
-    " Commands {{{2
-        " Highlight current line when in insert mode
-        autocmd InsertLeave * set nocursorline
-        autocmd InsertEnter * set cursorline
-
-        " Show foldcolumn when having folding
-        autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
-        autocmd CursorHold * call UpdateFoldcolumn()
-
-        " Remove trailing whitespaces and ^M chars
-        autocmd BufWritePre <buffer> call StripTrailingWhitespace()
-
-        " Customize indent style
-        autocmd FileType php,javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
-
-        " Fast source $MYVIMRC
-        autocmd BufWritePost .vimrc source $MYVIMRC
-
-        " Return to last edit position when opening files
-        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-
-        " Set working directory to the current file
-        autocmd BufEnter * if expand("%:p:h") !~ '^C:\\Windows\\system32' | silent! lcd %:p:h | endif
-
-        " Create directories for swap, backup, undo, view files if they don't exist
-        autocmd VimEnter * call s:InitializeDirectories()
-
-        " Save and load latest state of window size and opacity
-        autocmd VimEnter * call s:ReadFrameParams()
-        autocmd VimLeavePre * call s:WriteFrameParams()
-
-        " Save bookmark when leaving
-        autocmd VimLeavePre * call s:WriteBookmraksFile()
-
-        " Diff orig file
-        if !exists(":DiffOrig")
-            command DiffOrig vnew | set buftype=nofile | r # | 0d_ | diffthis | wincmd p | diffthis
-        endif
-
-        " Delete buffer while keeping window layout
-        command! -bang -complete=buffer -nargs=? Bclose call s:Bclose('<bang>', '<args>')
-        nnoremap <silent> <Leader>db :Bclose<CR>
-        " }}}2
-
-    " Key mappings {{{2
-        noremap   <Up>     <NOP>
-        noremap   <Down>   <NOP>
-        noremap   <Left>   <NOP>
-        noremap   <Right>  <NOP>
-        " Wrapped lines goes down/up to next row, rather than next line in file
-        nnoremap j gj
-        nnoremap k gk
-        " Visual shifting (does not exit Visual mode)
-        vnoremap < <gv
-        vnoremap > >gv
-        " Easier movement between windows
-        nnoremap <M-h> <C-W>h
-        nnoremap <M-j> <C-W>j
-        nnoremap <M-k> <C-W>k
-        nnoremap <M-l> <C-W>l
-        " Change window size
-        nnoremap <M->> <C-W>>
-        nnoremap <M-<> <C-W><
-        nnoremap <M-+> <C-W>+
-        nnoremap <M--> <C-W>-
-        nnoremap <M-=> <C-W>=
-        " Other window command key mappings
-        nnoremap <M-o> <C-W>o
-        nnoremap <M-q> <C-W>q
-
-        " Fast saving
-        nnoremap <leader>w :<C-U>w!<CR>
-
-        " Toggle search highlighting
-        nnoremap <silent> <leader>/ :set hlsearch! hlsearch?<CR>
-
-        " Quickly set foldlevel when zr/zm seems slow
-        nnoremap <silent> <Leader>fl :<C-U>call SetFoldlevel(input("Enter foldlevel: "))<CR>
-
-        " Quickly set foldmethod
-        nnoremap <silent> <leader>f1 :<C-U>setlocal foldmethod=marker<BAR>setlocal foldmarker={,}<BAR>setlocal foldtext=CustomFoldtext()<CR>
-        nnoremap <silent> <leader>f2 :<C-U>setlocal foldmethod=marker<BAR>setlocal foldmarker=/\*,\*/<BAR>setlocal foldtext=CustomFoldtext()<CR>
-
-        " Toggle menubar
-        nnoremap <silent> <leader><leader>m :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>else<BAR>set guioptions+=m<BAR>endif<CR>
-
-        " Toggle folds
-        nnoremap <space> :<C-U>call ToggleFold()<CR>
-
-        " Invert 'foldenable'
-        nnoremap <leader><space> <ESC>zi
-
-        " Toggle wrap lines
-        nnoremap <silent> <F2> :set wrap! wrap?<CR>
-
-        " Toggle listchars
-        nnoremap <silent> <F3> :set list! list?<CR>
-        imap <F2> <C-O><F2>
-        xmap <F2> <Esc><F2>gv
-
-        " Don't jump when using * for search
-        nnoremap * *<c-o>
-
-        " Search for selected text, forwards or backwards.
-        vnoremap <silent> * :<C-U>
-                    \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-                    \gvy/<C-R><C-R>=substitute(escape(@", '/\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
-                    \gV:call setreg('"', old_reg, old_regtype)<CR>
-        vnoremap <silent> # :<C-U>
-                    \let old_reg=getreg('"')<Bar>let old_regtype=getregtype('"')<CR>
-                    \gvy?<C-R><C-R>=substitute(escape(@", '?\.*$^~['), '\_s\+', '\\_s\\+', 'g')<CR><CR>
-                    \gV:call setreg('"', old_reg, old_regtype)<CR>
-
-        " Substitute visual selection
-        xnoremap & "*y<Esc>:<c-u>%s/<c-r>=substitute(escape(@*, '\/.*$^~['), "\n", '\\n', "g")<CR>//gc<LEFT><LEFT><LEFT>
-
-        " Adjust window size and opacity
-        nnoremap <silent> <F12> :<C-U>call <SID>AdjustFrameSize()<CR>
-        nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
-        nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
+    " Youcompleteme {{{2
+        let g:ycm_key_invoke_completion = '<leader>ic'
     " }}}2
 
 " }}}1
@@ -456,7 +416,7 @@
 
 " Functions {{{1
 
-    " Strip whitespace {{{2
+    " Remove trailing whitespaces and ^M chars {{{2
         function! StripTrailingWhitespace()
             let _s=@/
             let l = line(".")
@@ -465,9 +425,11 @@
             let @/=_s
             call cursor(l, c)
         endfunction
+
+        autocmd BufWritePre * call StripTrailingWhitespace()
     " }}}2
 
-    " Call SetFoldcolumn function at intervals {{{2
+    " Show foldcolumn when folding exists {{{2
         function! UpdateFoldcolumn(...)
             let interval=a:0>0 ? a:1 : 5
             let funcArg=a:0>1 ? a:2 : ''
@@ -478,9 +440,7 @@
                 let b:savedTime=localtime()
             endif
         endfunction
-    " }}}2
 
-    " Show foldcolumn when having folding {{{2
         function! SetFoldcolumn(...)
             let width=a:0>0 ? a:1 : 3
             let lineNum=1
@@ -493,17 +453,9 @@
             endwhile
             silent! execute "set foldcolumn=0"
         endfunction
-    " }}}2
 
-    " Quickly set foldlevel {{{2
-        function! SetFoldlevel(level)
-            let _level=a:level+0
-            if _level<0
-                let _level=0
-            endif
-            silent! execute "set foldlevel=" . _level
-            echo "foldlevel=" . _level
-        endfunction
+        autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
+        autocmd CursorHold * call UpdateFoldcolumn()
     " }}}2
 
     " Toggle fold state between closed and opened {{{2
@@ -519,6 +471,8 @@
             endif
             echo
         endfun
+
+        nnoremap <space> :<C-U>call ToggleFold()<CR>
     " }}}2
 
     " Customize foldtext {{{2
@@ -526,7 +480,7 @@
             let indent = repeat(' ', indent(v:foldstart))
             let startLine = getline(v:foldstart)
             let endLine = getline(v:foldend)
-            let windowWidth = winwidth(0) - &foldcolumn - &numberwidth
+            let windowWidth = winwidth(0) - &foldcolumn - &numberwidth - (YepNopeSigns()+0 ? 2 : 0)
             let foldSize = v:foldend - v:foldstart + 1
             let foldSizeStr = ' ' . foldSize . ' lines '
             let foldPercentage = printf("[%.1f", (foldSize * 1.0)/line('$') * 100) . "%] "
@@ -582,6 +536,24 @@
                 endif
             endif
         endfunction
+
+        function! YepNopeSigns()
+            redir => message
+            silent! execute 'sign place buffer=' . bufnr('%')
+            redir END
+            if match(message, 'id=\d\+') != -1
+                return 1
+            else
+                return
+            endif
+        endfunction
+
+        " Set foldtext
+        set foldtext=CustomFoldtext()
+
+        " Quickly set foldmethod
+        nnoremap <silent> <leader>fc :<C-U>setlocal foldmethod=marker foldmarker={,} foldtext=CustomFoldtext()<CR>
+        nnoremap <silent> <leader>fv :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
     " }}}2
 
     " Smart NERDTree bookmarks list {{{2
@@ -786,6 +758,11 @@
             endif
             call writefile(s:bmContent, g:NERDTreeBookmarksFile)
         endfunction
+
+        " Save bookmark when leaving
+        autocmd VimLeavePre * call s:WriteBookmraksFile()
+
+        nnoremap <silent> <leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
     " }}}2
 
     " Adjust window size and opacity {{{2
@@ -873,7 +850,7 @@
                             \(getwinposy()<0 ? 0 : getwinposy())
             endif
             let content = readfile($HOME.'/.cache/.vimsize')
-            let content = filter(content, "v:val !~ '^".v:servername." '")
+            let content = filter(content, "v:val !~# '^".v:servername." '")
             call add(content, newFrameParams)
             call writefile(content, $HOME.'/.cache/.vimsize')
         endfunction
@@ -890,7 +867,7 @@
                 endif
             endif
             let content = readfile($HOME.'/.cache/.vimsize')
-            let content = filter(content, "v:val =~ '^".v:servername." '")
+            let content = filter(content, "v:val =~# '^".v:servername." '")
             if len(content) > 0
                 let s:frameParams = content[-1]
             else
@@ -898,10 +875,17 @@
             endif
             call s:RestoreFrameParams()
         endfunction
+
+        nnoremap <silent> <F12> :<C-U>call <SID>AdjustFrameSize()<CR>
+        nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
+        nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
+
+        autocmd VimEnter * call s:ReadFrameParams()
+        autocmd VimLeavePre * call s:WriteFrameParams()
     " }}}2
 
     " Delete buffer while keeping window layout {{{2
-        function! s:Bclose(bang, buffer)
+        function! s:BClose(bang, buffer)
             if empty(a:buffer)
                 let bTarget = bufnr('%')
             elseif a:buffer =~ '^\d\+$'
@@ -915,11 +899,11 @@
                 return
             endif
             if empty(a:bang) && getbufvar(bTarget, '&modified')
-                echohl WarningMsg | echo 'No write since last change for buffer ' . bTarget . ' (use :Bclose!)' | echohl None
+                echohl WarningMsg | echo 'No write since last change for buffer ' . bTarget . ' (use :DeleteBuffer!)' | echohl None
                 return
             endif
             let wCurrent = winnr()
-            let wNums = filter(range(1, winnr('$')), 'winbufnr(v:val) == bTarget')
+            let wNums = filter(range(1, winnr('$')), "winbufnr(v:val) == " . bTarget)
             if len(wNums) > 0
                 for w in wNums
                     " Check if exists buflisted alternative buffer
@@ -929,8 +913,7 @@
                     " Check if exists nobuflisted unnamed buffer
                     let bNobuflistedMatch = -1
                     execute w . 'wincmd w'
-                    let maxBufNums = bufnr('$')
-                    for bufNum in range(1, maxBufNums)
+                    for bufNum in range(1, bufnr('$'))
                         if buflisted(bufNum) && bufnr(bufNum) != bTarget
                             if bufnr(bufNum) == bufnr('#')
                                 let bAlternative = bufnr(bufNum)
@@ -938,7 +921,7 @@
                                 let bBuflistedMatch = bufnr(bufNum)
                             endif
                         endif
-                        if !buflisted(bufNum) && !strlen(bufname(bufNum)) && bufnr(bufNum) != bTarget
+                        if bufloaded(bufNum) && !buflisted(bufNum) && !strlen(bufname(bufNum)) && bufnr(bufNum) != bTarget
                             let bNobuflistedMatch = bufnr(bufNum)
                         endif
                     endfor
@@ -963,9 +946,108 @@
             silent! execute 'bdelete' . a:bang . ' ' . bTarget
             execute wCurrent . 'wincmd w'
         endfunction
+
+        function! s:BHClose()
+            let total = 0
+            let protectedBufnameStr = '^\[SmartNERDTreeBookmark\]\|\[YankRing\]\|__Gundo_\|__Tagbar__\|NERD_tree_\|ControlP'
+            let wCurrent = winnr()
+            for w in range(1, winnr('$'))
+                execute w . 'wincmd w'
+                for bufNum in range(1, bufnr('$'))
+                    if bufloaded(bufNum) && !buflisted(bufNum) && match(bufname(bufNum), protectedBufnameStr) == -1
+                        execute 'bwipeout! ' . bufNum
+                        let total = total + 1
+                    endif
+                endfor
+            endfor
+            execute wCurrent . 'wincmd w'
+            if total > 0
+                echo 'Deleted ' . total . ' hidden buffers'
+            else
+                echo 'No hidden buffers exist'
+            endif
+        endfunction
+
+        command! -bang -complete=buffer -nargs=? BClose call s:BClose('<bang>', '<args>')
+        nnoremap <silent> <Leader>bc :BClose<CR>
+
+        command! -bang BHClose call s:BHClose()
+        nnoremap <silent> <Leader>bhc :BHClose<CR>
     " }}}2
 
-    " Initialize directories {{{2
+    " Remaps arrow keys to indent/unindent and add/remove blank lines {{{2
+        function! s:DelEmptyLine(direction)
+            let l:line = line('.')
+            let l:col = col('.')
+            if a:direction == '-'
+                if l:line == 1
+                    return
+                endif
+                if getline(l:line-1) =~ '^\s*$'
+                    let l:oldWinline = winline()
+                    .-1d
+                    call cursor(l:line-1, l:col)
+                    let l:newWinline = winline()
+                    if l:newWinline < l:oldWinline
+                        call feedkeys((l:oldWinline-l:newWinline)."\<C-y>")
+                    endif
+                endif
+            endif
+            if a:direction == '+'
+                if l:line == line('$')
+                    return
+                endif
+                if getline(l:line+1) =~ '^\s*$'
+                    .+1d
+                    call cursor(l:line, l:col)
+                endif
+            endif
+        endfunction
+
+        function! s:AddEmptyLine(direction)
+            let l:line = line('.')
+            let l:col = col('.')
+            if a:direction == '-'
+                let l:oldWinline = winline()
+                call append(line('.')-1, '')
+                call cursor(l:line+1, l:col)
+                let l:newWinline = winline()
+                if l:line > &scrolloff && l:newWinline > l:oldWinline
+                    call feedkeys((l:newWinline-l:oldWinline)."\<C-e>")
+                endif
+            endif
+            if a:direction == '+'
+                call append(line('.'), '')
+                call cursor(l:line, l:col)
+            endif
+        endfunction
+
+        " normal mode
+        nnoremap <silent> <Left> <<
+        nnoremap <silent> <Right> >>
+        nnoremap <silent> <Up> <Esc>:call <SID>AddEmptyLine('-')<CR>
+        nnoremap <silent> <Down>  <Esc>:call <SID>AddEmptyLine('+')<CR>
+        nnoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>
+        nnoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>
+
+        " visual mode
+        vnoremap <silent> <Left> <gv
+        vnoremap <silent> <Right> >gv
+        vnoremap <silent> <Up> <Esc>:call <SID>AddEmptyLine('-')<CR>gv
+        vnoremap <silent> <Down>  <Esc>:call <SID>AddEmptyLine('+')<CR>gv
+        vnoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>gv
+        vnoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>gv
+
+        " insert mode
+        inoremap <silent> <Left> <C-D>
+        inoremap <silent> <Right> <C-T>
+        inoremap <silent> <Up> <Esc>:call <SID>AddEmptyLine('-')<CR>a
+        inoremap <silent> <Down> <Esc>:call <SID>AddEmptyLine('+')<CR>a
+        inoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>a
+        inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
+    " }}}2
+
+    " Create directories for swap, backup, undo, view files if they don't exist {{{2
         function! s:InitializeDirectories()
             let parent = $HOME.'/.cache'
             " backupdir -- directory for backup files
@@ -991,6 +1073,8 @@
                 endif
             endfor
         endfunction
+
+        autocmd VimEnter * call s:InitializeDirectories()
     " }}}2
 
 " }}}1
