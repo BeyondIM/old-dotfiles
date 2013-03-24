@@ -34,6 +34,7 @@
         NeoBundle 'scrooloose/nerdcommenter'
         NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
         NeoBundle 'Lokaltog/vim-easymotion'
+        NeoBundle 'Lokaltog/powerline', 'develop', {'rtp':$HOME.'/.vim/bundle/powerline_develop/powerline/bindings/vim'}
         " completion
         NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
         NeoBundle 'Shougo/neosnippet'
@@ -65,8 +66,8 @@
 
     " Script {{{2
         set runtimepath+=$HOME/.vim/scripts/scriptbundle/
-        "let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
-        let g:curlProxy = 'socks5://127.0.0.1:8888'
+        let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
+        "let g:curlProxy = 'socks5://127.0.0.1:8888'
         let g:sevenZipPath = 'd:/software/7-Zip/7z.exe'
         call scriptbundle#rc()
         " mark
@@ -104,8 +105,8 @@
         " Set zh_CN.utf-8 as the standard language
         language messages en_US.utf-8
         " Reload menu to show Chinese characters properly
-        "source $VIMRUNTIME/delmenu.vim
-        "source $VIMRUNTIME/menu.vim
+        source $VIMRUNTIME/delmenu.vim
+        source $VIMRUNTIME/menu.vim
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
         " Make a backup before overwriting a file
@@ -241,9 +242,9 @@
         " Highlight current line when in insert mode
         autocmd InsertLeave * set nocursorline
         autocmd InsertEnter * set cursorline
-        "if g:colors_name == 'jellybeans'
-            "autocmd VimEnter * highlight CursorLine guibg=#363636
-        "endif
+        if exists('g:colors_name') && g:colors_name == 'jellybeans'
+            autocmd VimEnter * highlight CursorLine guibg=#363636
+        endif
 
         " Fast source $MYVIMRC
         autocmd BufWritePost .vimrc nested source $MYVIMRC
@@ -252,8 +253,8 @@
         autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | execute "normal! g`\"" | endif
 
         " Set working directory to the current file
-        autocmd BufEnter * if s:isWin && expand("%:p:h") !~ '\c^C:\\Windows\\system32' ||
-                    \!s:isWin && expand("%:p:h") !~ '/tmp' |
+        autocmd BufEnter * if s:isWin && expand("%:p:h", 1) !~ '\c^C:\\Windows\\system32' ||
+                    \!s:isWin && expand("%:p:h", 1) !~ '/tmp' |
                     \silent! lcd %:p:h |
                     \endif
 
@@ -1099,7 +1100,7 @@
             execute wCurrent . 'wincmd w'
         endfunction
 
-        function! s:BCloseHidden()
+        function! s:BHiddenClose()
             let total = 0
             let wCurrent = winnr()
             for w in range(1, winnr('$'))
@@ -1122,8 +1123,8 @@
         command! -bang -complete=buffer -nargs=? BClose call s:BClose('<bang>', '<args>')
         nnoremap <silent> <LocalLeader>bc :BClose<CR>
 
-        command! -bang BCloseHidden call s:BCloseHidden()
-        nnoremap <silent> <LocalLeader>bh :BCloseHidden<CR>
+        command! -bang BHiddenClose call s:BHiddenClose()
+        nnoremap <silent> <LocalLeader>bh :BHiddenClose<CR>
     " }}}2
 
     " Remaps arrow keys to indent/unindent and add/remove blank lines {{{2
