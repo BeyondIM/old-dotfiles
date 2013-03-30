@@ -1,4 +1,4 @@
-﻿" This is BeyondIM's vim config.
+" This is BeyondIM's vim config for Vim 7.
 
 " Environment {{{1
 
@@ -25,6 +25,8 @@
         NeoBundleFetch 'Shougo/neobundle.vim'
         " colorscheme
         NeoBundle 'nanotech/jellybeans.vim'
+        NeoBundle 'altercation/vim-colors-solarized'
+        NeoBundle 'tomasr/molokai'
         " enhancement
         NeoBundle 'kien/ctrlp.vim'
         NeoBundle 'tpope/vim-surround'
@@ -32,6 +34,7 @@
         NeoBundle 'vim-scripts/YankRing.vim'
         NeoBundle 'scrooloose/nerdtree'
         NeoBundle 'scrooloose/nerdcommenter'
+        NeoBundle 'mileszs/ack.vim'
         NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
         NeoBundle 'Lokaltog/vim-easymotion'
         NeoBundle 'Lokaltog/powerline', 'develop', {'rtp':$HOME.'/.vim/bundle/powerline_develop/powerline/bindings/vim'}
@@ -66,8 +69,8 @@
 
     " Script {{{2
         set runtimepath+=$HOME/.vim/scripts/scriptbundle/
-        let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
-        "let g:curlProxy = 'socks5://127.0.0.1:8888'
+        "let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
+        let g:curlProxy = 'socks5://127.0.0.1:8888'
         let g:sevenZipPath = 'd:/software/7-Zip/7z.exe'
         call scriptbundle#rc()
         " mark
@@ -76,6 +79,8 @@
         Script '39'
         " align
         Script '294'
+        " pyte
+        Script '1492', {'subdir':'colors'}
     " }}}2
 
 " }}}1
@@ -103,7 +108,7 @@
         set fileencodings=utf-8,prc,latin1
         scriptencoding utf-8
         " Set zh_CN.utf-8 as the standard language
-        language messages en_US.utf-8
+        language messages zh_CN.utf-8
         " Reload menu to show Chinese characters properly
         source $VIMRUNTIME/delmenu.vim
         source $VIMRUNTIME/menu.vim
@@ -186,6 +191,8 @@
         if has("gui_running")
             " use console dialogs
             set guioptions+=c
+            " don't auto-copy selection to * register
+            set guioptions-=a
             " don't use gui tabs
             set guioptions-=e
             " don't show menubar
@@ -203,13 +210,6 @@
             " don't use ALT key to activate menu
             set winaltkeys=no
         endif
-
-        " Colorscheme
-        set background=dark
-        try
-            colorscheme jellybeans
-        catch
-        endtry
     " }}}2
 
     " Formatting {{{2
@@ -365,10 +365,10 @@
 
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
-        let s:ignoreExtension1 = 'lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz'
-        let s:ignoreExtension2 = 'exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\='
-        let NERDTreeIgnore=['\c\.\(' . s:ignoreExtension1 . '\|' .
-                        \(s:isWin ? s:ignoreExtension2 : "") .
+        let s:normalExts = 'lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz'
+        let s:winExts = 'exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\='
+        let NERDTreeIgnore=['\c\.\(' . s:normalExts . '\|' .
+                        \(s:isWin ? s:winExts : "") .
                         \'\)$']
         let NERDTreeBookmarksFile = $HOME.'/.cache/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
@@ -383,8 +383,8 @@
                     \'dir' : '\c^\(' .
                         \(s:isWin ? 'c:\\Windows\\\|c:\\Users\\[^\\]\+\\' : "") .
                     \'\)',
-                    \'file' : '\c\.\(' . s:ignoreExtension1 . '\|' .
-                        \(s:isWin ? s:ignoreExtension2 : "") .
+                    \'file' : '\c\.\(' . s:normalExts . '\|' .
+                        \(s:isWin ? s:winExts : "") .
                         \'\)$'
                     \}
         let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp'
@@ -454,8 +454,8 @@
         let g:neocomplcache_use_vimproc = 1
         let g:neocomplcache_min_syntax_length = 3
         let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
-        let s:protectedBufnameStr = '^\[SmartNERDTreeBookmark\]\|\[YankRing\]\|__Gundo_\|__Tagbar__\|NERD_tree_\|ControlP'
-        let g:neocomplcache_lock_buffer_name_pattern = s:protectedBufnameStr
+        let s:ignoredBufs = '^\[SmartNERDTreeBookmark\]\|\[YankRing\]\|__Gundo_\|__Tagbar__\|NERD_tree_\|ControlP'
+        let g:neocomplcache_lock_buffer_name_pattern = s:ignoredBufs
 
         " Define keyword, for minor languages
         if !exists('g:neocomplcache_keyword_patterns')
@@ -496,7 +496,7 @@
     " MatchTagAlways {{{2
         let g:mta_use_matchparen_group = 0
         let g:mta_set_default_matchtag_color = 1
-        autocmd filetype html autocmd BufEnter * highlight clear MatchTag |
+        autocmd filetype html autocmd BufEnter <buffer> highlight clear MatchTag |
                     \highlight MatchTag guifg=#990024 gui=bold,italic
     " }}}2
 
@@ -547,7 +547,7 @@
             call cursor(l, c)
         endfunction
 
-        autocmd BufWritePre * call StripTrailingWhitespace()
+        autocmd filetype php,javascript autocmd BufWritePre <buffer> call StripTrailingWhitespace()
     " }}}2
 
     " Show foldcolumn when folding exists {{{2
@@ -632,15 +632,15 @@
             let foldPercentage = printf("[%.1f", (foldSize * 1.0)/line('$') * 100) . "%] "
             let foldLevelStr = repeat('+--', v:foldlevel)
             " fold comments when setting foldmarker as /\*,\*/
-            if match(startLine, '^[ \t]*/\*\(\(\W\|_\)\(\*/\)\@!\)*[ \t]*$') == 0 &&
-                        \match(endLine, '^[ \t]*\(\(/\*\)\@<!\(\W\|_\)\)*\*/[ \t]*$') == 0
-                let temp =matchstr(startLine, '^\([ \t]*/\*\)\ze\(\(\(\W\|_\)\(\*/\)\@!\)*\)')
+            if match(startLine, '^\s*/\*\(\(\W\|_\)\(\*/\)\@!\)*\s*$') == 0 &&
+                        \match(endLine, '^\s*\(\(/\*\)\@<!\(\W\|_\)\)*\*/\s*$') == 0
+                let temp =matchstr(startLine, '^\(\s*/\*\)\ze\(\(\(\W\|_\)\(\*/\)\@!\)*\)')
                 let startStr = substitute(temp, '^\t\+', indent, '')
                 let text = startStr . ' ... */'
                 let lineNum = v:foldstart + 1
                 while lineNum < v:foldend
                     let curLine = getline(lineNum)
-                    let comment = substitute(curLine, '^\%( \|\t\|\W\|_\)*\(.*\)[ \t]*$', '\1', '')
+                    let comment = substitute(curLine, '^\%(\s\|\W\|_\)*\(.*\)\s*$', '\1', '')
                     if comment != ''
                         let text = startStr . ' ' . comment . ' */'
                         break
@@ -709,7 +709,8 @@
                 silent! execute 'keepalt botright 1new'
                 silent! execute 'edit ' . g:NERDTreeBookmarksFile
                 silent! execute 'write!'
-                silent! execute 'wincmd q'
+                silent! execute 'bwipeout!'
+                silent! execute 'close!'
                 if !filereadable(g:NERDTreeBookmarksFile)
                     echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't read!" | echohl None
                     return
@@ -892,7 +893,8 @@
                 silent! execute 'keepalt botright 1new'
                 silent! execute 'edit ' . g:NERDTreeBookmarksFile
                 silent! execute 'write!'
-                silent! execute 'wincmd q'
+                silent! execute 'bwipeout!'
+                silent! execute 'close!'
                 if !filereadable(g:NERDTreeBookmarksFile)
                     echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't read!" | echohl None
                     return
@@ -982,7 +984,8 @@
                 silent! execute 'keepalt botright 1new'
                 silent! execute 'edit ' . $HOME.'/.cache/.vimsize'
                 silent! execute 'write!'
-                silent! execute 'wincmd q'
+                silent! execute 'bwipeout!'
+                silent! execute 'close!'
                 if !filereadable($HOME.'/.cache/.vimsize')
                     echohl WarningMsg | echo ".vimsize can't read!" | echohl None
                     return
@@ -1009,7 +1012,8 @@
                 silent! execute 'keepalt botright 1new'
                 silent! execute 'edit ' . $HOME.'/.cache/.vimsize'
                 silent! execute 'write!'
-                silent! execute 'wincmd q'
+                silent! execute 'bwipeout!'
+                silent! execute 'close!'
                 if !filereadable($HOME.'/.cache/.vimsize')
                     echohl WarningMsg | echo ".vimsize can't read!" | echohl None
                     return
@@ -1025,12 +1029,14 @@
             call s:RestoreFrameParams()
         endfunction
 
-        nnoremap <silent> <F12> :<C-U>call <SID>AdjustFrameSize()<CR>
-        nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
-        nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
+        if !empty(glob($VIMRUNTIME.'/vimtweak.dll'))
+            nnoremap <silent> <F12> :<C-U>call <SID>AdjustFrameSize()<CR>
+            nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
+            nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
 
-        autocmd VimEnter * call s:ReadFrameParams()
-        autocmd VimLeavePre * call s:WriteFrameParams()
+            autocmd VimEnter * call s:ReadFrameParams()
+            autocmd VimLeavePre * call s:WriteFrameParams()
+        endif
     " }}}2
 
     " Delete buffer while keeping window layout {{{2
@@ -1106,7 +1112,7 @@
             for w in range(1, winnr('$'))
                 execute w . 'wincmd w'
                 for bufNum in range(1, bufnr('$'))
-                    if bufloaded(bufNum) && !buflisted(bufNum) && match(bufname(bufNum), s:protectedBufnameStr) == -1
+                    if bufloaded(bufNum) && !buflisted(bufNum) && match(bufname(bufNum), s:ignoredBufs) == -1
                         execute 'bwipeout! ' . bufNum
                         let total = total + 1
                     endif
@@ -1197,6 +1203,83 @@
         inoremap <silent> <Down> <Esc>:call <SID>AddEmptyLine('+')<CR>a
         inoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>a
         inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
+    " }}}2
+
+    " Toggle color schemes {{{2
+        " init
+        set background=dark
+        try
+            colorscheme jellybeans
+        catch
+        endtry
+        " add all favorite color schemes to toggle
+        let s:darkColors = ['jellybeans', 'molokai', 'solarized']
+        let s:lightColors = ['pyte', 'solarized']
+
+        function! SetDarkColor()
+            if &background == 'light'
+                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
+                    let curColor = g:colors_name
+                else
+                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[0]
+                endif
+            else
+                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
+                    let idx = index(s:darkColors, g:colors_name)
+                    let curColor = (idx<(len(s:darkColors)-1) ? s:darkColors[idx+1] : s:darkColors[0])
+                else
+                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[0]
+                endif
+            endif
+            call HandleColor(curColor, 'dark')
+        endfunction
+
+        function! SetLightColor()
+            if &background == 'dark'
+                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
+                    let curColor = g:colors_name
+                else
+                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[0]
+                endif
+            else
+                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
+                    let idx = index(s:lightColors, g:colors_name)
+                    let curColor = idx<(len(s:lightColors)-1) ? s:lightColors[idx+1] : s:lightColors[0]
+                else
+                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[0]
+                endif
+            endif
+            call HandleColor(curColor, 'light')
+        endfunction
+
+        function! IsValidColor(color)
+            let colorsPathList = globpath(&runtimepath, 'colors/*.vim', 1)
+            let colorsList = map(split(colorsPathList, '\n'), "fnamemodify(v:val, ':t:r')")
+            if index(colorsList, a:color) != -1
+                return 1
+            else
+                return
+            endif
+        endfunction
+
+        function! HandleColor(color,bg)
+            if !IsValidColor(a:color)
+                echohl ErrorMsg | echo 'Color scheme: '.a:color.' is invalid.' | echohl None
+                return
+            else
+                silent! execute 'colorscheme '.a:color
+            endif
+            if a:bg == 'dark'
+                let &background = 'dark'
+                let s:lastDarkColor = a:color
+            elseif a:bg == 'light'
+                let &background = 'light'
+                let s:lastLightColor = a:color
+            endif
+        endfunction
+
+        nnoremap <silent> <F10> :<C-U>call SetDarkColor()<CR>
+        nnoremap <silent> <F11> :<C-U>call SetLightColor()<CR>
     " }}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
