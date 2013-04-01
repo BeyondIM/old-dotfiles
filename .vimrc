@@ -25,7 +25,7 @@
         NeoBundleFetch 'Shougo/neobundle.vim'
         " colorscheme
         NeoBundle 'nanotech/jellybeans.vim'
-        NeoBundle 'altercation/vim-colors-solarized'
+        NeoBundle 'jonathanfilip/vim-lucius'
         NeoBundle 'tomasr/molokai'
         " enhancement
         NeoBundle 'kien/ctrlp.vim'
@@ -37,7 +37,7 @@
         NeoBundle 'mileszs/ack.vim'
         NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
         NeoBundle 'Lokaltog/vim-easymotion'
-        NeoBundle 'Lokaltog/powerline', 'develop', {'rtp':$HOME.'/.vim/bundle/powerline_develop/powerline/bindings/vim'}
+        NeoBundle 'Lokaltog/powerline', 'develop', {'rtp':'powerline/bindings/vim'}
         " completion
         NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
         NeoBundle 'Shougo/neosnippet'
@@ -79,8 +79,14 @@
         Script '39'
         " align
         Script '294'
-        " pyte
-        Script '1492', {'subdir':'colors'}
+        " wombat
+        Script '1778', {'subdir':'colors'}
+        " oceandeep
+        Script '368', {'subdir':'colors'}
+        " github
+        Script '2855', {'subdir':'colors'}
+        " mayansmoke
+        Script '3065', {'subdir':'colors'}
     " }}}2
 
 " }}}1
@@ -239,12 +245,9 @@
 " Commands, key mapping {{{1
 
     " Commands {{{2
-        " Highlight current line when in insert mode
-        autocmd InsertLeave * set nocursorline
-        autocmd InsertEnter * set cursorline
-        if exists('g:colors_name') && g:colors_name == 'jellybeans'
-            autocmd VimEnter * highlight CursorLine guibg=#363636
-        endif
+        " Highlight current line and cursor when in insert mode
+        autocmd InsertLeave * set nocursorline | highlight! link Cursor NONE
+        autocmd InsertEnter * set cursorline | highlight CustomCursor guibg=green | highlight! link Cursor CustomCursor
 
         " Fast source $MYVIMRC
         autocmd BufWritePost .vimrc nested source $MYVIMRC
@@ -435,10 +438,18 @@
     " }}}2
 
     " Syntastic {{{2
-        let g:syntastic_error_symbol='ХХ'
-        let g:syntastic_style_error_symbol='SХ'
-        let g:syntastic_warning_symbol='!!'
-        let g:syntastic_style_warning_symbol='S!'
+        let g:syntastic_error_symbol='Х'
+        let g:syntastic_warning_symbol='!'
+        let g:syntastic_style_error_symbol='Х'
+        let g:syntastic_style_warning_symbol='!'
+        highlight link SyntasticErrorSign NONE
+        highlight link SyntasticWarningSign NONE
+        highlight link SyntasticStyleErrorSign NONE
+        highlight link SyntasticStyleWarningSign NONE
+        highlight SyntasticErrorSign guibg=NONE guifg=#FF0000
+        highlight SyntasticWarningSign guibg=NONE guifg=#FF0000
+        highlight SyntasticStyleErrorSign guibg=NONE guifg=#FFFF00
+        highlight SyntasticStyleWarningSign guibg=NONE guifg=#FFFF00
         let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
         let g:syntastic_php_phpcs_args='--tab-width=4 --standard=Zend --report=csv'
         let g:syntastic_javascript_checkers=['jslint']
@@ -454,7 +465,7 @@
         let g:neocomplcache_use_vimproc = 1
         let g:neocomplcache_min_syntax_length = 3
         let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
-        let s:ignoredBufs = '^\[SmartNERDTreeBookmark\]\|\[YankRing\]\|__Gundo_\|__Tagbar__\|NERD_tree_\|ControlP'
+        let s:ignoredBufs = '^\[.\+\]\|__.\+__\|NERD_tree_\|ControlP'
         let g:neocomplcache_lock_buffer_name_pattern = s:ignoredBufs
 
         " Define keyword, for minor languages
@@ -497,7 +508,7 @@
         let g:mta_use_matchparen_group = 0
         let g:mta_set_default_matchtag_color = 1
         autocmd filetype html autocmd BufEnter <buffer> highlight clear MatchTag |
-                    \highlight MatchTag guifg=#990024 gui=bold,italic
+                    \highlight MatchTag guifg=#990024 gui=bold
     " }}}2
 
     " Vdebug {{{2
@@ -916,6 +927,120 @@
         nnoremap <silent> <Leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
     " }}}2
 
+    " Toggle color schemes {{{2
+        " set default color scheme
+        let s:fallbackColor = 'default'
+        " add all favorite color schemes to toggle
+        let s:darkColors = ['jellybeans', 'molokai', 'wombat', 'oceandeep', 'lucius']
+        let s:lightColors = ['mayansmoke', 'github', 'lucius']
+
+        function! s:SetColor(color)
+            if index(s:darkColors, a:color) != -1
+                let bg = 'dark'
+            elseif index(s:lightColors, a:color) != -1
+                let bg = 'light'
+            else
+                silent! execute 'colorscheme '.s:fallbackColor
+                let &background = 'light'
+                return
+            endif
+            call s:HandleColor(a:color, bg)
+        endfunction
+
+        function! s:SetDarkColor(handle)
+            if a:handle == '+'
+                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
+                    if &background == 'light'
+                        let curColor = g:colors_name
+                    else
+                        let idx = index(s:darkColors, g:colors_name)
+                        let curColor = idx<(len(s:darkColors)-1) ? s:darkColors[idx+1] : s:darkColors[0]
+                    endif
+                else
+                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[0]
+                endif
+            elseif a:handle == '-'
+                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
+                    if &background == 'light'
+                        let curColor = g:colors_name
+                    else
+                        let idx = index(s:darkColors, g:colors_name)
+                        let curColor = (idx>0) ? s:darkColors[idx-1] : s:darkColors[-1]
+                    endif
+                else
+                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[-1]
+                endif
+            endif
+            call s:HandleColor(curColor, 'dark')
+            if exists('g:colors_name')
+                redraw
+                echo 'Current color scheme: '.g:colors_name
+            endif
+        endfunction
+
+        function! s:SetLightColor(handle)
+            if a:handle == '+'
+                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
+                    if &background == 'dark'
+                        let curColor = g:colors_name
+                    else
+                        let idx = index(s:lightColors, g:colors_name)
+                        let curColor = idx<(len(s:lightColors)-1) ? s:lightColors[idx+1] : s:lightColors[0]
+                    endif
+                else
+                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[0]
+                endif
+            elseif a:handle == '-'
+                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
+                    if &background == 'dark'
+                        let curColor = g:colors_name
+                    else
+                        let idx = index(s:lightColors, g:colors_name)
+                        let curColor = (idx>0) ? s:lightColors[idx-1] : s:lightColors[-1]
+                    endif
+                else
+                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[-1]
+                endif
+            endif
+            call s:HandleColor(curColor, 'light')
+            if exists('g:colors_name')
+                redraw
+                echo 'Current color scheme: '.g:colors_name
+            endif
+        endfunction
+
+        function! s:IsValidColor(color)
+            let colorsPathList = globpath(&runtimepath, 'colors/*.vim', 1)
+            let colorsList = map(split(colorsPathList, '\n'), "fnamemodify(v:val, ':t:r')")
+            if index(colorsList, a:color) != -1
+                return 1
+            else
+                return
+            endif
+        endfunction
+
+        function! s:HandleColor(color,bg)
+            if !s:IsValidColor(a:color)
+                echohl ErrorMsg | echo 'Color scheme: '.a:color.' is invalid.' | echohl None
+                return
+            else
+                silent! execute 'colorscheme '.a:color
+            endif
+            if a:bg == 'dark'
+                let &background = 'dark'
+                let s:lastDarkColor = a:color
+            elseif a:bg == 'light'
+                let &background = 'light'
+                let s:lastLightColor = a:color
+            endif
+        endfunction
+
+        nnoremap <silent> <F10> :<C-U>call <SID>SetDarkColor('+')<CR>
+        nnoremap <silent> <C-F10> :<C-U>call <SID>SetDarkColor('-')<CR>
+        nnoremap <silent> <F11> :<C-U>call <SID>SetLightColor('+')<CR>
+        nnoremap <silent> <C-F11> :<C-U>call <SID>SetLightColor('-')<CR>
+    " }}}2
+
     " Adjust window size and opacity {{{2
         function! s:AdjustFrameAlpha(handle)
             if !has('gui_running')
@@ -935,7 +1060,8 @@
                 endif
                 let s:frameParams = elem[0] . ' ' . elem[1] . ' ' . alpha . ' ' . &lines . ' ' . &columns . ' ' .
                             \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                            \(getwinposy()<0 ? 0 : getwinposy())
+                            \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
+                            \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
                 call s:RestoreFrameParams()
             endif
         endfunction
@@ -952,7 +1078,8 @@
                 let isMaximized = elem[1]+0 ? 0 : 1
                 let s:frameParams = elem[0] . ' ' . isMaximized . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
                             \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                            \(getwinposy()<0 ? 0 : getwinposy())
+                            \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
+                            \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
                 call s:RestoreFrameParams()
             endif
         endfunction
@@ -960,7 +1087,8 @@
         function! s:InitFrameParams()
             let s:frameParams = v:servername . ' 0 255 ' . &lines . ' ' . &columns . ' ' .
                         \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                        \(getwinposy()<0 ? 0 : getwinposy())
+                        \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
+                        \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
         endfunction
 
         function! s:RestoreFrameParams()
@@ -976,6 +1104,7 @@
                     call libcallnr("vimtweak.dll", "EnableMaximize", 0)
                 endif
                 call libcallnr("vimtweak.dll", "SetAlpha", elem[2]+0)
+                call s:SetColor(elem[7])
             endif
         endfunction
 
@@ -999,7 +1128,8 @@
             if elem[0] == v:servername
                 let newFrameParams = elem[0] . ' ' . elem[1] . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
                             \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                            \(getwinposy()<0 ? 0 : getwinposy())
+                            \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
+                            \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
             endif
             let content = readfile($HOME.'/.cache/.vimsize')
             let content = filter(content, "v:val !~# '^".v:servername." '")
@@ -1203,83 +1333,6 @@
         inoremap <silent> <Down> <Esc>:call <SID>AddEmptyLine('+')<CR>a
         inoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>a
         inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
-    " }}}2
-
-    " Toggle color schemes {{{2
-        " init
-        set background=dark
-        try
-            colorscheme jellybeans
-        catch
-        endtry
-        " add all favorite color schemes to toggle
-        let s:darkColors = ['jellybeans', 'molokai', 'solarized']
-        let s:lightColors = ['pyte', 'solarized']
-
-        function! SetDarkColor()
-            if &background == 'light'
-                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
-                    let curColor = g:colors_name
-                else
-                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[0]
-                endif
-            else
-                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
-                    let idx = index(s:darkColors, g:colors_name)
-                    let curColor = (idx<(len(s:darkColors)-1) ? s:darkColors[idx+1] : s:darkColors[0])
-                else
-                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[0]
-                endif
-            endif
-            call HandleColor(curColor, 'dark')
-        endfunction
-
-        function! SetLightColor()
-            if &background == 'dark'
-                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
-                    let curColor = g:colors_name
-                else
-                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[0]
-                endif
-            else
-                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
-                    let idx = index(s:lightColors, g:colors_name)
-                    let curColor = idx<(len(s:lightColors)-1) ? s:lightColors[idx+1] : s:lightColors[0]
-                else
-                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[0]
-                endif
-            endif
-            call HandleColor(curColor, 'light')
-        endfunction
-
-        function! IsValidColor(color)
-            let colorsPathList = globpath(&runtimepath, 'colors/*.vim', 1)
-            let colorsList = map(split(colorsPathList, '\n'), "fnamemodify(v:val, ':t:r')")
-            if index(colorsList, a:color) != -1
-                return 1
-            else
-                return
-            endif
-        endfunction
-
-        function! HandleColor(color,bg)
-            if !IsValidColor(a:color)
-                echohl ErrorMsg | echo 'Color scheme: '.a:color.' is invalid.' | echohl None
-                return
-            else
-                silent! execute 'colorscheme '.a:color
-            endif
-            if a:bg == 'dark'
-                let &background = 'dark'
-                let s:lastDarkColor = a:color
-            elseif a:bg == 'light'
-                let &background = 'light'
-                let s:lastLightColor = a:color
-            endif
-        endfunction
-
-        nnoremap <silent> <F10> :<C-U>call SetDarkColor()<CR>
-        nnoremap <silent> <F11> :<C-U>call SetLightColor()<CR>
     " }}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
