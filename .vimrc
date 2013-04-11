@@ -1,4 +1,4 @@
-" This is BeyondIM's vim config for Vim 7.
+" This is BeyondIM's vim config.
 
 " Environment {{{1
 
@@ -6,13 +6,16 @@
         " Enable no Vi compatible commands
         set nocompatible
         " Set viminfo path
-        set viminfo+=n$HOME/.cache/.viminfo
+        set viminfo+=n$HOME/.vim_record/.viminfo
+        " Check system
+        let s:isWin = has('win32') || has('win64')
+        let s:isMac = has('unix') && substitute(system('uname'), '\n', '', '') =~# 'Darwin\|Mac' 
+        let s:isLinux = has('unix') && substitute(system('uname'), '\n', '', '') ==# 'Linux' 
         " Remove all autocommands to avoid sourcing them twice
         autocmd!
     " }}}2
 
     " Windows Compatible {{{2
-        let s:isWin = has('win32') || has('win64')
         if s:isWin
             set runtimepath=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
         endif
@@ -26,7 +29,7 @@
         " colorscheme
         NeoBundle 'nanotech/jellybeans.vim'
         NeoBundle 'jonathanfilip/vim-lucius'
-        NeoBundle 'tomasr/molokai'
+        NeoBundle 'BeyondIM/molokai'
         " enhancement
         NeoBundle 'kien/ctrlp.vim'
         NeoBundle 'tpope/vim-surround'
@@ -41,13 +44,11 @@
         " completion
         NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
         NeoBundle 'Shougo/neosnippet'
-        NeoBundle 'honza/snipmate-snippets'
+        NeoBundle 'honza/vim-snippets'
         " html
         NeoBundleLazy 'othree/html5.vim', {'autoload':{'filetypes':'html'}}
-        NeoBundle 'Valloric/MatchTagAlways'
         " css
-        NeoBundleLazy 'lepture/vim-css', {'autoload':{'filetypes':'css'}}
-        NeoBundleLazy 'ap/vim-css-color', {'autoload':{'filetypes':'css'}}
+        NeoBundleLazy 'JulesWang/css.vim', {'autoload':{'filetypes':'css'}}
         " php
         NeoBundleLazy 'spf13/PIV', {'autoload':{'filetypes':'php'}}
         " javascript
@@ -69,9 +70,13 @@
 
     " Script {{{2
         set runtimepath+=$HOME/.vim/scripts/scriptbundle/
-        "let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
-        let g:curlProxy = 'socks5://127.0.0.1:8888'
-        let g:sevenZipPath = 'd:/software/7-Zip/7z.exe'
+        " Set reverse proxy server or http, socks proxy if can't access vim official site
+        " let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
+        " let g:curlProxy = 'socks://127.0.0.1:8888'
+        let g:curlProxy = 'http://127.0.0.1:8087'
+        if s:isWin
+            let g:sevenZipPath = 'c:/Program Files/7-Zip/7z.exe'
+        endif
         call scriptbundle#rc()
         " mark
         Script '2666'
@@ -79,13 +84,11 @@
         Script '39'
         " align
         Script '294'
-        " wombat
+        " wombat colorscheme
         Script '1778', {'subdir':'colors'}
-        " oceandeep
-        Script '368', {'subdir':'colors'}
-        " github
+        " github colorscheme
         Script '2855', {'subdir':'colors'}
-        " mayansmoke
+        " mayansmoke colorscheme
         Script '3065', {'subdir':'colors'}
     " }}}2
 
@@ -113,11 +116,6 @@
         set fileencoding=utf-8
         set fileencodings=utf-8,prc,latin1
         scriptencoding utf-8
-        " Set zh_CN.utf-8 as the standard language
-        language messages zh_CN.utf-8
-        " Reload menu to show Chinese characters properly
-        source $VIMRUNTIME/delmenu.vim
-        source $VIMRUNTIME/menu.vim
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
         " Make a backup before overwriting a file
@@ -211,11 +209,20 @@
             set guioptions-=l
             set guioptions-=L
             set t_co=256
-            set guifont=Consolas_for_Powerline:h12:cANSI
-            set guifontwide=Yahei_Mono:h11
+            if s:isWin
+                set guifont=Consolas_for_Powerline:h12:cANSI
+                set guifontwide=Yahei_Mono:h11
+            elseif s:isMac
+                set guifont=Consolas\ for\ Powerline:h16
+                set guifontwide=Heiti\ SC\ Light:h16
+            endif
             " don't use ALT key to activate menu
             set winaltkeys=no
         endif
+        " activate option key in macvim
+        if has("gui_macvim")
+            set macmeta
+        end
     " }}}2
 
     " Formatting {{{2
@@ -246,8 +253,8 @@
 
     " Commands {{{2
         " Highlight current line and cursor when in insert mode
-        autocmd InsertLeave * set nocursorline | highlight! link Cursor NONE
-        autocmd InsertEnter * set cursorline | highlight CustomCursor guibg=green | highlight! link Cursor CustomCursor
+        autocmd InsertLeave * set nocursorline
+        autocmd InsertEnter * set cursorline
 
         " Fast source $MYVIMRC
         autocmd BufWritePost .vimrc nested source $MYVIMRC
@@ -257,7 +264,7 @@
 
         " Set working directory to the current file
         autocmd BufEnter * if s:isWin && expand("%:p:h", 1) !~ '\c^C:\\Windows\\system32' ||
-                    \!s:isWin && expand("%:p:h", 1) !~ '/tmp' |
+                    \(s:isMac || s:isLinux) && expand("%:p:h", 1) !~ '/tmp' |
                     \silent! lcd %:p:h |
                     \endif
 
@@ -331,12 +338,12 @@
         nnoremap <LocalLeader>9 :set foldlevel=9<CR>
 
         " Toggle wrap lines
-        nnoremap <silent> <F2> :set wrap! wrap?<CR>
+        nnoremap <silent> <C-F2> :set wrap! wrap?<CR>
 
         " Toggle listchars
-        nnoremap <silent> <F3> :set list! list?<CR>
-        imap <F2> <C-O><F2>
-        xmap <F2> <Esc><F2>gv
+        nnoremap <silent> <C-F3> :set list! list?<CR>
+        imap <C-F3> <C-O><C-F3>
+        xmap <C-F3> <Esc><C-F3>gv
 
         " Toggle ignore whitespace when diff
         nnoremap <LocalLeader>iw :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>
@@ -373,7 +380,7 @@
         let NERDTreeIgnore=['\c\.\(' . s:normalExts . '\|' .
                         \(s:isWin ? s:winExts : "") .
                         \'\)$']
-        let NERDTreeBookmarksFile = $HOME.'/.cache/.NERDTreeBookmarks'
+        let NERDTreeBookmarksFile = $HOME.'/.vim_record/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
     " }}}2
@@ -390,11 +397,11 @@
                         \(s:isWin ? s:winExts : "") .
                         \'\)$'
                     \}
-        let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp'
+        let g:ctrlp_cache_dir = $HOME.'/.vim_record/ctrlp'
     " }}}2
 
     " YankRing {{{2
-        let g:yankring_history_dir = $HOME.'/.cache'
+        let g:yankring_history_dir = $HOME.'/.vim_record'
         nnoremap <silent> <Leader>y :YRGetElem<CR>
         function! YRRunAfterMaps()
             nnoremap <silent> Y :<C-U>YRYankCount 'y$'<CR>
@@ -422,11 +429,13 @@
 
     " Tagbar {{{2
         nnoremap <silent> <Leader>t :TagbarToggle<CR>
-        let g:tagbar_ctags_bin = $HOME.'/bin/ctags58/ctags.exe'
-        let g:tagbar_systemenc = 'cp936'
+        if s:isWin
+            let g:tagbar_ctags_bin = $HOME.'/bin/ctags.exe'
+            let g:tagbar_type_javascript = { 'ctagsbin' : $HOME.'/bin/jsctags.bat' }
+            let g:tagbar_phpctags_bin = $HOME.'/bin/phpctags.bat'
+            let g:tagbar_systemenc = 'cp936'
+        endif
         let g:tagbar_autofocus = 1
-        let g:tagbar_type_javascript = { 'ctagsbin' : $HOME.'/bin/jsctags.bat' }
-        let g:tagbar_phpctags_bin = $HOME.'/bin/phpctags.bat'
         let g:tagbar_type_markdown = {
                     \ 'ctagstype' : 'markdown',
                     \ 'kinds' : [
@@ -438,18 +447,10 @@
     " }}}2
 
     " Syntastic {{{2
-        let g:syntastic_error_symbol='Х'
-        let g:syntastic_warning_symbol='!'
-        let g:syntastic_style_error_symbol='Х'
-        let g:syntastic_style_warning_symbol='!'
-        highlight link SyntasticErrorSign NONE
-        highlight link SyntasticWarningSign NONE
-        highlight link SyntasticStyleErrorSign NONE
-        highlight link SyntasticStyleWarningSign NONE
-        highlight SyntasticErrorSign guibg=NONE guifg=#FF0000
-        highlight SyntasticWarningSign guibg=NONE guifg=#FF0000
-        highlight SyntasticStyleErrorSign guibg=NONE guifg=#FFFF00
-        highlight SyntasticStyleWarningSign guibg=NONE guifg=#FFFF00
+        let g:syntastic_error_symbol='ХХ'
+        let g:syntastic_style_error_symbol='SХ'
+        let g:syntastic_warning_symbol='!!'
+        let g:syntastic_style_warning_symbol='S!'
         let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
         let g:syntastic_php_phpcs_args='--tab-width=4 --standard=Zend --report=csv'
         let g:syntastic_javascript_checkers=['jslint']
@@ -464,7 +465,7 @@
         let g:neocomplcache_enable_underbar_completion = 1
         let g:neocomplcache_use_vimproc = 1
         let g:neocomplcache_min_syntax_length = 3
-        let g:neocomplcache_temporary_dir = $HOME.'/.cache/.neocon'
+        let g:neocomplcache_temporary_dir = $HOME.'/.vim_record/.neocon'
         let s:ignoredBufs = '^\[.\+\]\|__.\+__\|NERD_tree_\|ControlP'
         let g:neocomplcache_lock_buffer_name_pattern = s:ignoredBufs
 
@@ -500,15 +501,8 @@
         endif
 
         "Use snipmate snippets
-        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/snipmate-snippets/snippets'
+        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/vim-snippets/snippets'
         let g:neosnippet#enable_snipmate_compatibility = 1
-    " }}}2
-
-    " MatchTagAlways {{{2
-        let g:mta_use_matchparen_group = 0
-        let g:mta_set_default_matchtag_color = 1
-        autocmd filetype html autocmd BufEnter <buffer> highlight clear MatchTag |
-                    \highlight MatchTag guifg=#990024 gui=bold
     " }}}2
 
     " Vdebug {{{2
@@ -826,6 +820,7 @@
                     if path != ''
                         let path = substitute(path, '\\ ', ' ', 'g')
                         let path = substitute(path, '[\\/]$', '', '')
+                        let path = substitute(path, '^\~', expand('~'), '')
                     else
                         return
                     endif
@@ -869,6 +864,7 @@
                         if newPath != ''
                             let newPath = substitute(newPath, '\\ ', ' ', 'g')
                             let newPath = substitute(newPath, '[\\/]$', '', '')
+                            let newPath = substitute(newPath, '^\~', expand('~'), '')
                         else
                             let newPath = path
                         endif
@@ -931,7 +927,7 @@
         " set default color scheme
         let s:fallbackColor = 'default'
         " add all favorite color schemes to toggle
-        let s:darkColors = ['jellybeans', 'molokai', 'wombat', 'oceandeep', 'lucius']
+        let s:darkColors = ['jellybeans', 'molokai', 'wombat', 'lucius']
         let s:lightColors = ['mayansmoke', 'github', 'lucius']
 
         function! s:SetColor(color)
@@ -1035,10 +1031,10 @@
             endif
         endfunction
 
-        nnoremap <silent> <F10> :<C-U>call <SID>SetDarkColor('+')<CR>
-        nnoremap <silent> <C-F10> :<C-U>call <SID>SetDarkColor('-')<CR>
-        nnoremap <silent> <F11> :<C-U>call <SID>SetLightColor('+')<CR>
-        nnoremap <silent> <C-F11> :<C-U>call <SID>SetLightColor('-')<CR>
+        nnoremap <silent> <C-F10> :<C-U>call <SID>SetDarkColor('+')<CR>
+        nnoremap <silent> <M-F10> :<C-U>call <SID>SetDarkColor('-')<CR>
+        nnoremap <silent> <C-F11> :<C-U>call <SID>SetLightColor('+')<CR>
+        nnoremap <silent> <M-F11> :<C-U>call <SID>SetLightColor('-')<CR>
     " }}}2
 
     " Adjust window size and opacity {{{2
@@ -1052,11 +1048,19 @@
             let elem = split(s:frameParams)
             if elem[0] == v:servername
                 let alpha = elem[2]+0
-                if a:handle == '+' && alpha < 255
-                    let alpha = alpha+1
+                if a:handle == '+'
+                    if s:isWin && alpha < 255
+                        let alpha = alpha+1
+                    elseif s:isMac && alpha > 0
+                        let alpha = alpha-1
+                    endif
                 endif
-                if a:handle == '-' && alpha > 0
-                    let alpha = alpha-1
+                if a:handle == '-'
+                    if s:isWin && alpha > 0
+                        let alpha = alpha-1
+                    elseif s:isMac && alpha < 100
+                        let alpha = alpha+1
+                    endif
                 endif
                 let s:frameParams = elem[0] . ' ' . elem[1] . ' ' . alpha . ' ' . &lines . ' ' . &columns . ' ' .
                             \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
@@ -1085,7 +1089,7 @@
         endfunction
 
         function! s:InitFrameParams()
-            let s:frameParams = v:servername . ' 0 255 ' . &lines . ' ' . &columns . ' ' .
+            let s:frameParams = v:servername . ' 0 ' . (s:isWin ? '255 ' : '0 ') . &lines . ' ' . &columns . ' ' .
                         \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
                         \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
                         \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
@@ -1095,32 +1099,44 @@
             let elem = split(s:frameParams)
             if elem[0] == v:servername
                 if elem[1]+0
-                    call libcallnr("vimtweak.dll", "EnableMaximize", 1)
-                    call libcallnr("vimtweak.dll", "EnableCaption", 0)
+                    if s:isWin
+                        call libcallnr("vimtweak.dll", "EnableMaximize", 1)
+                        call libcallnr("vimtweak.dll", "EnableCaption", 0)
+                    elseif s:isMac
+                        let &g:fullscreen = 1
+                    endif
                 else
                     silent! execute 'set lines=' . elem[3] . ' columns=' . elem[4]
                     silent! execute 'winpos ' . elem[5] . ' ' .  elem[6]
-                    call libcallnr("vimtweak.dll", "EnableCaption", 1)
-                    call libcallnr("vimtweak.dll", "EnableMaximize", 0)
+                    if s:isWin
+                        call libcallnr("vimtweak.dll", "EnableCaption", 1)
+                        call libcallnr("vimtweak.dll", "EnableMaximize", 0)
+                    elseif s:isMac
+                        let &g:fullscreen = 0
+                    endif
                 endif
-                call libcallnr("vimtweak.dll", "SetAlpha", elem[2]+0)
+                if s:isWin
+                    call libcallnr("vimtweak.dll", "SetAlpha", elem[2]+0)
+                elseif s:isMac
+                    let &g:transparency = elem[2]+0
+                endif
                 call s:SetColor(elem[7])
             endif
         endfunction
 
         function! s:WriteFrameParams()
-            if !filereadable($HOME.'/.cache/.vimsize')
+            if !filereadable($HOME.'/.vim_record/.vimsize')
                 silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . $HOME.'/.cache/.vimsize'
+                silent! execute 'edit ' . $HOME.'/.vim_record/.vimsize'
                 silent! execute 'write!'
                 silent! execute 'bwipeout!'
                 silent! execute 'close!'
-                if !filereadable($HOME.'/.cache/.vimsize')
+                if !filereadable($HOME.'/.vim_record/.vimsize')
                     echohl WarningMsg | echo ".vimsize can't read!" | echohl None
                     return
                 endif
             endif
-            if filewritable($HOME.'/.cache/.vimsize') == 0
+            if filewritable($HOME.'/.vim_record/.vimsize') == 0
                 echohl WarningMsg | echo ".vimsize can't write!" | echohl None
                 return
             endif
@@ -1131,25 +1147,25 @@
                             \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
                             \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
             endif
-            let content = readfile($HOME.'/.cache/.vimsize')
+            let content = readfile($HOME.'/.vim_record/.vimsize')
             let content = filter(content, "v:val !~# '^".v:servername." '")
             call add(content, newFrameParams)
-            call writefile(content, $HOME.'/.cache/.vimsize')
+            call writefile(content, $HOME.'/.vim_record/.vimsize')
         endfunction
 
         function! s:ReadFrameParams()
-            if !filereadable($HOME.'/.cache/.vimsize')
+            if !filereadable($HOME.'/.vim_record/.vimsize')
                 silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . $HOME.'/.cache/.vimsize'
+                silent! execute 'edit ' . $HOME.'/.vim_record/.vimsize'
                 silent! execute 'write!'
                 silent! execute 'bwipeout!'
                 silent! execute 'close!'
-                if !filereadable($HOME.'/.cache/.vimsize')
+                if !filereadable($HOME.'/.vim_record/.vimsize')
                     echohl WarningMsg | echo ".vimsize can't read!" | echohl None
                     return
                 endif
             endif
-            let content = readfile($HOME.'/.cache/.vimsize')
+            let content = readfile($HOME.'/.vim_record/.vimsize')
             let content = filter(content, "v:val =~# '^".v:servername." '")
             if len(content) > 0
                 let s:frameParams = content[-1]
@@ -1159,8 +1175,8 @@
             call s:RestoreFrameParams()
         endfunction
 
-        if !empty(glob($VIMRUNTIME.'/vimtweak.dll'))
-            nnoremap <silent> <F12> :<C-U>call <SID>AdjustFrameSize()<CR>
+        if s:isWin && !empty(glob($VIMRUNTIME.'/vimtweak.dll')) || s:isMac
+            nnoremap <silent> <C-F12> :<C-U>call <SID>AdjustFrameSize()<CR>
             nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
             nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
 
@@ -1337,7 +1353,7 @@
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
         function! s:InitializeDirectories()
-            let parent = $HOME.'/.cache'
+            let parent = $HOME.'/.vim_record'
             " backupdir -- directory for backup files
             " viewdir -- directory for view files
             " directory -- directory for swap files
