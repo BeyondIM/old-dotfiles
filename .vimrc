@@ -28,21 +28,17 @@
         NeoBundleFetch 'Shougo/neobundle.vim'
         " colorscheme
         NeoBundle 'nanotech/jellybeans.vim'
-        NeoBundle 'jonathanfilip/vim-lucius'
         NeoBundle 'BeyondIM/molokai'
         " enhancement
         NeoBundle 'kien/ctrlp.vim'
         NeoBundle 'tpope/vim-surround'
         NeoBundle 'tpope/vim-repeat'
-        NeoBundle 'vim-scripts/YankRing.vim'
         NeoBundle 'scrooloose/nerdtree'
         NeoBundle 'scrooloose/nerdcommenter'
         NeoBundle 'mileszs/ack.vim'
         NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
-        NeoBundle 'Lokaltog/vim-easymotion'
-        NeoBundle 'Lokaltog/powerline', 'develop', {'rtp':'powerline/bindings/vim'}
         " completion
-        NeoBundle 'Shougo/neocomplcache', {'depends':'Shougo/vimproc'}
+        NeoBundle 'Shougo/neocomplete', {'depends':'Shougo/vimproc'}
         NeoBundle 'Shougo/neosnippet'
         NeoBundle 'honza/vim-snippets'
         " html
@@ -50,18 +46,18 @@
         " css
         NeoBundleLazy 'JulesWang/css.vim', {'autoload':{'filetypes':'css'}}
         " php
-        NeoBundleLazy 'spf13/PIV', {'autoload':{'filetypes':'php'}}
+        NeoBundleLazy 'shawncplus/phpcomplete.vim', {'autoload':{'filetypes':'php'}}
+        NeoBundleLazy '2072/PHP-Indenting-for-VIm', {'autoload':{'filetypes':'php'}}
         " javascript
         NeoBundleLazy 'pangloss/vim-javascript', {'autoload':{'filetypes':'javascript'}}
         " markdown
         NeoBundleLazy 'tpope/vim-markdown', {'autoload':{'filetypes':'markdown'}}
-        NeoBundleLazy 'waylan/vim-markdown-extra-preview', {'autoload':{'commands':['Me','Mer']}}
         " gist
         NeoBundleLazy 'mattn/gist-vim', {'depends':'mattn/webapi-vim', 'autoload':{'commands':'Gist'}}
         " tags
         NeoBundleLazy 'mozilla/doctorjs', '1062dd3', 'same', {'autoload':{'filetypes':'javascript'}}
         NeoBundleLazy 'techlivezheng/phpctags', {'autoload':{'filetypes':'php'}}
-        NeoBundleLazy 'techlivezheng/tagbar-phpctags', {'autoload':{'filetypes':'php'}}
+        NeoBundleLazy 'techlivezheng/vim-plugin-tagbar-phpctags', {'autoload':{'filetypes':'php'}}
         NeoBundle 'majutsushi/tagbar'
         " syntax check & debug
         NeoBundle 'scrooloose/syntastic'
@@ -78,6 +74,8 @@
             let g:sevenZipPath = 'c:/Program Files/7-Zip/7z.exe'
         endif
         call scriptbundle#rc()
+        " yankring
+        Script '1234'
         " mark
         Script '2666'
         " matchit
@@ -116,6 +114,9 @@
         set fileencoding=utf-8
         set fileencodings=utf-8,prc,latin1
         scriptencoding utf-8
+        " Reload menu to show Chinese characters properly
+        source $VIMRUNTIME/delmenu.vim
+        source $VIMRUNTIME/menu.vim        
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
         " Make a backup before overwriting a file
@@ -146,8 +147,15 @@
         set wildignore+=*/.git/*,*/.DS_Store
         " Always show current position
         set ruler
-        " Always show statusline
+         " Always has a status line
         set laststatus=2
+        set statusline=[#%n]%(\ %{StlPath()}%)
+        set statusline+=%(\ %{StlSign1()}%)
+        set statusline+=%(\ %{StlSign2()}%)
+        set statusline+=%(\ %{SyntasticStatuslineFlag()}%)
+        set statusline+=%=
+        set statusline+=%(%y\ %)
+        set statusline+=L:\ %l/%L[%p%%]\ C:\ %c
         " Configure backspace so it acts as it should act
         set backspace=eol,start,indent
         set whichwrap+=<,>,h,l
@@ -408,11 +416,6 @@
         endfunction
     " }}}2
 
-    " PIV {{{2
-        let g:DisableAutoPHPFolding = 0
-        let g:PIVAutoClose = 0
-    " }}}2
-
     " Vim-javascript {{{2
         let g:html_indent_inctags = "html,body,head,tbody"
         let g:html_indent_script1 = "inc"
@@ -451,41 +454,38 @@
         let g:syntastic_style_error_symbol='SХ'
         let g:syntastic_warning_symbol='!!'
         let g:syntastic_style_warning_symbol='S!'
+        let g:syntastic_stl_format = '[%F, %E{%eX}%B{ }%W{%w!}]'
         let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
         let g:syntastic_php_phpcs_args='--tab-width=4 --standard=Zend --report=csv'
         let g:syntastic_javascript_checkers=['jslint']
     " }}}2
 
-    " Neocomplcache {{{2
-        let g:neocomplcache_enable_at_startup = 1
-        let g:neocomplcache_enable_smart_case = 1
-        " Use camel case completion
-        let g:neocomplcache_enable_camel_case_completion = 1
-        " Use underscore completion
-        let g:neocomplcache_enable_underbar_completion = 1
-        let g:neocomplcache_use_vimproc = 1
-        let g:neocomplcache_min_syntax_length = 3
-        let g:neocomplcache_temporary_dir = $HOME.'/.vim_record/.neocon'
+    " Neocomplete {{{2
+        let g:neocomplete#enable_at_startup = 1
+        let g:neocomplete#enable_smart_case = 1
+        let g:neocomplete#use_vimproc = 1
+        let g:neocomplete#sources#syntax#min_keyword_length = 3
+        let g:neocomplete#data_directory = $HOME.'/.vim_record/.neocomplete'
         let s:ignoredBufs = '^\[.\+\]\|__.\+__\|NERD_tree_\|ControlP'
-        let g:neocomplcache_lock_buffer_name_pattern = s:ignoredBufs
+        let g:neocomplete#lock_buffer_name_pattern = s:ignoredBufs
 
         " Define keyword, for minor languages
-        if !exists('g:neocomplcache_keyword_patterns')
-            let g:neocomplcache_keyword_patterns = {}
+        if !exists('g:neocomplete_keyword_patterns')
+            let g:neocomplete_keyword_patterns = {}
         endif
-        let g:neocomplcache_keyword_patterns['default'] = '\h\w*'
+        let g:neocomplete_keyword_patterns['default'] = '\h\w*'        
 
         " key mappings
-        inoremap <expr><C-g> neocomplcache#undo_completion()
-        inoremap <expr><C-l> neocomplcache#complete_common_string()
-        inoremap <expr><C-h> neocomplcache#smart_close_popup()."\<C-h>"
-        inoremap <expr><BS> neocomplcache#smart_close_popup()."\<C-h>"
+        inoremap <expr><C-g> neocomplete#undo_completion()
+        inoremap <expr><C-l> neocomplete#complete_common_string()
+        inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
+        inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
 
         inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
         inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
 
         inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
-                    \ pumvisible() ? neocomplcache#close_popup() : "\<CR>"
+                    \ pumvisible() ? neocomplete#close_popup() : "\<CR>"
 
         inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
         snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
@@ -927,8 +927,8 @@
         " set default color scheme
         let s:fallbackColor = 'default'
         " add all favorite color schemes to toggle
-        let s:darkColors = ['jellybeans', 'molokai', 'wombat', 'lucius']
-        let s:lightColors = ['mayansmoke', 'github', 'lucius']
+        let s:darkColors = ['jellybeans', 'molokai', 'wombat']
+        let s:lightColors = ['mayansmoke', 'github']
 
         function! s:SetColor(color)
             if index(s:darkColors, a:color) != -1
@@ -1350,6 +1350,58 @@
         inoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>a
         inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
     " }}}2
+
+    " Customize statusline {{{2
+        function! StlPath()
+            let l:str = ''
+            if &l:buftype == 'nofile'
+                let l:str = '<Scratch>'
+            elseif &l:buftype == 'quickfix'
+                let l:str = '<quickfix>'
+            elseif &l:buftype == 'help'
+                let l:str = '<help>'
+            elseif &l:buftype == ''
+                if expand("%:p:h") == getcwd()
+                    let l:str = expand("%:p")
+                else
+                    let l:str = '<' . getcwd() . '> ' . expand("%:p:t")
+                endif
+            endif
+            return l:str
+        endfunction
+
+        function! StlSign1()
+            let l:str = ''
+            if &l:readonly
+                if &l:modified
+                    let l:str = '[RO,+]'
+                else
+                    let l:str = '[RO]'
+                endif
+            else
+                if &l:modified
+                    let l:str = '[+]'
+                endif
+            endif
+            return l:str
+        endfunction
+
+        function! StlSign2()
+            let l:str = ''
+            if &l:fileencoding != 'utf-8' && &l:fileencoding != ''
+                if &l:fileformat != 'unix'
+                    let l:str = '[' . &l:fileencoding . ',' . &l:fileformat . ']'
+                else
+                    let l:str = '[' . &l:fileencoding . ']'
+                endif
+            else
+                if &l:fileformat != 'unix'
+                    let l:str = '[' . &l:fileformat . ']'
+                endif
+            endif
+            return l:str
+        endfunction
+    "}}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
         function! s:InitializeDirectories()
