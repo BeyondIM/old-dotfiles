@@ -6,7 +6,7 @@
         " Enable no Vi compatible commands
         set nocompatible
         " Set viminfo path
-        set viminfo+=n$HOME/.vim_record/.viminfo
+        set viminfo+=n$HOME/.vimdb/.viminfo
         " Check system
         let s:isWin = has('win32') || has('win64')
         let s:isMac = has('unix') && substitute(system('uname'), '\n', '', '') =~# 'Darwin\|Mac' 
@@ -21,9 +21,9 @@
         endif
     " }}}2
 
-    " Neobundle {{{2
+    " NeoBundle {{{2
         set runtimepath+=$HOME/.vim/bundle/neobundle.vim/
-        call neobundle#rc('$HOME/.vim/bundle/')
+        call neobundle#rc(expand('~/.vim/bundle/'))
         " Let NeoBundle manage NeoBundle
         NeoBundleFetch 'Shougo/neobundle.vim'
         " colorscheme
@@ -36,32 +36,28 @@
         NeoBundle 'scrooloose/nerdtree'
         NeoBundle 'scrooloose/nerdcommenter'
         NeoBundle 'mileszs/ack.vim'
-        NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}}
+        NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}} 
         " completion
-        NeoBundle 'Shougo/neocomplete', {'depends':'Shougo/vimproc'}
-        NeoBundle 'Shougo/neosnippet'
-        NeoBundle 'honza/vim-snippets'
+        NeoBundle 'Valloric/YouCompleteMe'
+        NeoBundle 'SirVer/ultisnips'
         " html
-        NeoBundleLazy 'othree/html5.vim', {'autoload':{'filetypes':'html'}}
+        NeoBundle 'othree/html5.vim'
         " css
-        NeoBundleLazy 'JulesWang/css.vim', {'autoload':{'filetypes':'css'}}
-        " php
-        NeoBundleLazy 'shawncplus/phpcomplete.vim', {'autoload':{'filetypes':'php'}}
-        NeoBundleLazy '2072/PHP-Indenting-for-VIm', {'autoload':{'filetypes':'php'}}
+        NeoBundle 'JulesWang/css.vim'
         " javascript
-        NeoBundleLazy 'pangloss/vim-javascript', {'autoload':{'filetypes':'javascript'}}
+        NeoBundle 'pangloss/vim-javascript'
+        " ruby
+        NeoBundle 'vim-ruby/vim-ruby'
+        NeoBundle 'tpope/vim-rails'
         " markdown
-        NeoBundleLazy 'tpope/vim-markdown', {'autoload':{'filetypes':'markdown'}}
+        NeoBundle 'tpope/vim-markdown'
         " gist
         NeoBundleLazy 'mattn/gist-vim', {'depends':'mattn/webapi-vim', 'autoload':{'commands':'Gist'}}
         " tags
-        NeoBundleLazy 'mozilla/doctorjs', '1062dd3', 'same', {'autoload':{'filetypes':'javascript'}}
-        NeoBundleLazy 'techlivezheng/phpctags', {'autoload':{'filetypes':'php'}}
-        NeoBundleLazy 'techlivezheng/vim-plugin-tagbar-phpctags', {'autoload':{'filetypes':'php'}}
+        NeoBundle 'mozilla/doctorjs', {'rev': '1062dd3'}
         NeoBundle 'majutsushi/tagbar'
-        " syntax check & debug
+        " syntax check
         NeoBundle 'scrooloose/syntastic'
-        NeoBundle 'joonty/vdebug'
     " }}}2
 
     " Script {{{2
@@ -70,9 +66,6 @@
         " let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
         " let g:curlProxy = 'socks://127.0.0.1:8888'
         let g:curlProxy = 'http://127.0.0.1:8087'
-        if s:isWin
-            let g:sevenZipPath = 'c:/Program Files/7-Zip/7z.exe'
-        endif
         call scriptbundle#rc()
         " yankring
         Script '1234'
@@ -84,8 +77,6 @@
         Script '294'
         " wombat colorscheme
         Script '1778', {'subdir':'colors'}
-        " github colorscheme
-        Script '2855', {'subdir':'colors'}
         " mayansmoke colorscheme
         Script '3065', {'subdir':'colors'}
     " }}}2
@@ -149,10 +140,12 @@
         set ruler
          " Always has a status line
         set laststatus=2
-        set statusline=[#%n]%(\ %{StlPath()}%)
-        set statusline+=%(\ %{StlSign1()}%)
-        set statusline+=%(\ %{StlSign2()}%)
-        set statusline+=%(\ %{SyntasticStatuslineFlag()}%)
+        set statusline=[#%n]%(\ %{STLPath()}%)
+        set statusline+=%(\ %{STLStatus()}%)
+        set statusline+=%(\ %{STLFormat()}%)
+        if exists(':SyntasticCheck')
+            set statusline+=%(\ %{SyntasticStatuslineFlag()}%)
+        endif
         set statusline+=%=
         set statusline+=%(%y\ %)
         set statusline+=L:\ %l/%L[%p%%]\ C:\ %c
@@ -218,10 +211,10 @@
             set guioptions-=L
             set t_co=256
             if s:isWin
-                set guifont=Consolas_for_Powerline:h12:cANSI
+                set guifont=Consolas:h12:cANSI
                 set guifontwide=Yahei_Mono:h11
             elseif s:isMac
-                set guifont=Consolas\ for\ Powerline:h16
+                set guifont=Consolas:h16
                 set guifontwide=Heiti\ SC\ Light:h16
             endif
             " don't use ALT key to activate menu
@@ -270,19 +263,13 @@
         " Return to last edit position when opening files
         autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | execute "normal! g`\"" | endif
 
-        " Set working directory to the current file
-        autocmd BufEnter * if s:isWin && expand("%:p:h", 1) !~ '\c^C:\\Windows\\system32' ||
-                    \(s:isMac || s:isLinux) && expand("%:p:h", 1) !~ '/tmp' |
-                    \silent! lcd %:p:h |
-                    \endif
-
         " OmniComplete
-        autocmd filetype * if exists('+omnifunc') && &omnifunc == '' |
+        autocmd filetype * if exists('+omnifunc') && empty(&omnifunc) |
                     \setlocal omnifunc=syntaxcomplete#Complete |
                     \endif
 
         " Customize indent style
-        autocmd FileType javascript,html,xhtml,css setlocal tabstop=2 shiftwidth=2 softtabstop=2
+        autocmd FileType html,xhtml,css,javascript,ruby,eruby setlocal tabstop=2 shiftwidth=2 softtabstop=2
 
         " Resize splits when the window is resized
         autocmd VimResized * execute "normal! \<c-w>="
@@ -292,11 +279,6 @@
             command DiffOrig vnew | set buftype=nofile | r # | 0d_ | diffthis | wincmd p | diffthis
         endif
 
-        " Append date/time
-        command! -nargs=0 AppendNow  :execute "normal a".strftime("%c")
-        command! -nargs=0 AppendDate :execute "normal a".strftime("%Y-%m-%d")
-        command! -nargs=0 AppendTime :execute "normal a".strftime("%H:%M")
-        command! -nargs=0 AppendDateTime :execute "normal a".strftime("%Y-%m-%d %H:%M")
         " }}}2
 
     " Key mappings {{{2
@@ -326,7 +308,7 @@
         nnoremap <silent> <LocalLeader>/ :set hlsearch! hlsearch?<CR>
 
         " Toggle menubar
-        nnoremap <silent> <LocalLeader>m :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>
+        nnoremap <silent> <LocalLeader>mb :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>
                     \else<BAR>set guioptions+=m<BAR>
                     \endif<CR>
 
@@ -388,7 +370,7 @@
         let NERDTreeIgnore=['\c\.\(' . s:normalExts . '\|' .
                         \(s:isWin ? s:winExts : "") .
                         \'\)$']
-        let NERDTreeBookmarksFile = $HOME.'/.vim_record/.NERDTreeBookmarks'
+        let NERDTreeBookmarksFile = $HOME.'/.vimdb/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
     " }}}2
@@ -405,11 +387,11 @@
                         \(s:isWin ? s:winExts : "") .
                         \'\)$'
                     \}
-        let g:ctrlp_cache_dir = $HOME.'/.vim_record/ctrlp'
+        let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
     " }}}2
 
     " YankRing {{{2
-        let g:yankring_history_dir = $HOME.'/.vim_record'
+        let g:yankring_history_dir = $HOME.'/.vimdb'
         nnoremap <silent> <Leader>y :YRGetElem<CR>
         function! YRRunAfterMaps()
             nnoremap <silent> Y :<C-U>YRYankCount 'y$'<CR>
@@ -435,7 +417,6 @@
         if s:isWin
             let g:tagbar_ctags_bin = $HOME.'/bin/ctags.exe'
             let g:tagbar_type_javascript = { 'ctagsbin' : $HOME.'/bin/jsctags.bat' }
-            let g:tagbar_phpctags_bin = $HOME.'/bin/phpctags.bat'
             let g:tagbar_systemenc = 'cp936'
         endif
         let g:tagbar_autofocus = 1
@@ -447,77 +428,41 @@
                     \ 'k:Heading_L3'
                     \ ]
                     \ }
+        let g:tagbar_type_ruby = {
+                    \ 'kinds' : [
+                    \ 'm:modules',
+                    \ 'c:classes',
+                    \ 'd:describes',
+                    \ 'C:contexts',
+                    \ 'f:methods',
+                    \ 'F:singleton methods'
+                    \ ]
+                    \ }
+        let g:tagbar_type_css = {
+                    \ 'ctagstype' : 'Css',
+                    \ 'kinds'     : [
+                    \ 'c:classes',
+                    \ 's:selectors',
+                    \ 'i:identities'
+                    \ ]
+                    \ }
+    " }}}2
+
+    " YouCompleteMe {{{2
+        let g:ycm_key_invoke_completion = '<C-l>'
+    " }}}2
+
+    " UltiSnips {{{2
+        let g:UltiSnipsSnippetDirectories=["UltiSnips", ".mysnips"]
+        let g:UltiSnipsExpandTrigger="<C-j>"
+        let g:UltiSnipsJumpForwardTrigger="<C-j>"
+        let g:UltiSnipsJumpBackwardTrigger="<C-k>"
     " }}}2
 
     " Syntastic {{{2
-        let g:syntastic_error_symbol='ХХ'
-        let g:syntastic_style_error_symbol='SХ'
-        let g:syntastic_warning_symbol='!!'
-        let g:syntastic_style_warning_symbol='S!'
-        let g:syntastic_stl_format = '[%F, %E{%eX}%B{ }%W{%w!}]'
-        let g:syntastic_php_checkers=['php', 'phpcs', 'phpmd']
-        let g:syntastic_php_phpcs_args='--tab-width=4 --standard=Zend --report=csv'
+        let g:syntastic_stl_format = '[L:%F, %E{Err:%e}%B{ }%W{Warn:%w}]'
         let g:syntastic_javascript_checkers=['jslint']
-    " }}}2
-
-    " Neocomplete {{{2
-        let g:neocomplete#enable_at_startup = 1
-        let g:neocomplete#enable_smart_case = 1
-        let g:neocomplete#use_vimproc = 1
-        let g:neocomplete#sources#syntax#min_keyword_length = 3
-        let g:neocomplete#data_directory = $HOME.'/.vim_record/.neocomplete'
-        let s:ignoredBufs = '^\[.\+\]\|__.\+__\|NERD_tree_\|ControlP'
-        let g:neocomplete#lock_buffer_name_pattern = s:ignoredBufs
-
-        " Define keyword, for minor languages
-        if !exists('g:neocomplete_keyword_patterns')
-            let g:neocomplete_keyword_patterns = {}
-        endif
-        let g:neocomplete_keyword_patterns['default'] = '\h\w*'        
-
-        " key mappings
-        inoremap <expr><C-g> neocomplete#undo_completion()
-        inoremap <expr><C-l> neocomplete#complete_common_string()
-        inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
-        inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-
-        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
-
-        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
-                    \ pumvisible() ? neocomplete#close_popup() : "\<CR>"
-
-        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
-        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
-
-        " Enable omni completion
-        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-
-        " For snippet_complete marker
-        if has('conceal')
-            set conceallevel=2 concealcursor=i
-        endif
-
-        "Use snipmate snippets
-        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/vim-snippets/snippets'
-        let g:neosnippet#enable_snipmate_compatibility = 1
-    " }}}2
-
-    " Vdebug {{{2
-        let g:vdebug_keymap = {
-                    \    "run" : "<Leader><F5>",
-                    \    "run_to_cursor" : "<Leader><F1>",
-                    \    "step_over" : "<Leader><F2>",
-                    \    "step_into" : "<Leader><F3>",
-                    \    "step_out" : "<Leader><F4>",
-                    \    "close" : "<Leader><F6>",
-                    \    "detach" : "<Leader><F7>",
-                    \    "set_breakpoint" : "<Leader><F10>",
-                    \    "get_context" : "<Leader><F11>",
-                    \    "eval_under_cursor" : "<Leader><F12>",
-                    \}
+        let g:syntastic_ruby_checkers=['mri', 'rubocop']
     " }}}2
 
     " Mark {{{2
@@ -537,6 +482,14 @@
         nmap <Plug>IgnoreMarkSearchPrev <Plug>MarkSearchPrev
     " }}}2
 
+    " Vim-ruby {{{2
+        let g:rubycomplete_rails = 1
+        let g:rubycomplete_classes_in_global = 1
+        let g:rubycomplete_buffer_loading = 1
+        let g:rubycomplete_include_object = 1
+        let g:rubycomplete_include_objectspace = 1
+    " }}}2
+
 " }}}1
 
 
@@ -552,30 +505,32 @@
             call cursor(l, c)
         endfunction
 
-        autocmd filetype php,javascript autocmd BufWritePre <buffer> call StripTrailingWhitespace()
+        autocmd filetype javascript,ruby autocmd BufWritePre <buffer> call StripTrailingWhitespace()
     " }}}2
 
     " Show foldcolumn when folding exists {{{2
         function! UpdateFoldcolumn(...)
-            let interval=a:0>0 ? a:1 : 5
-            let funcArg=a:0>1 ? a:2 : ''
+            let defaultInterval = 5
+            let interval = a:0 > 0 ? a:1 : defaultInterval
+            let foldcolumnWidth = a:0 > 1 ? a:2 : ''
             if !exists('b:savedTime')
-                let b:savedTime=localtime()
-            elseif localtime()-b:savedTime>=interval
-                silent! execute 'call SetFoldcolumn(' . funcArg . ')'
-                let b:savedTime=localtime()
+                let b:savedTime = localtime()
+            elseif localtime() - b:savedTime >= interval
+                silent! execute 'call SetFoldcolumn(' . foldcolumnWidth . ')'
+                let b:savedTime = localtime()
             endif
         endfunction
 
         function! SetFoldcolumn(...)
-            let width=a:0>0 ? a:1 : 3
+            let defaultWidth = 3
+            let width = a:0 > 0 ? a:1 : defaultWidth
             let lineNum=1
             while lineNum <= line("$")
-                if foldlevel(lineNum) != 0
+                if foldlevel(lineNum)
                     silent! execute "set foldcolumn=" . width
                     return
                 endif
-                let lineNum=lineNum+1
+                let lineNum = lineNum + 1
             endwhile
             silent! execute "set foldcolumn=0"
         endfunction
@@ -586,7 +541,7 @@
 
     " Toggle fold state between closed and opened {{{2
         function! ToggleFold()
-            if foldlevel('.') == 0
+            if !foldlevel('.')
                 normal! l
             else
                 if foldclosed('.') < 0
@@ -631,22 +586,22 @@
             let indent = repeat(' ', indent(v:foldstart))
             let startLine = getline(v:foldstart)
             let endLine = getline(v:foldend)
-            let windowWidth = winwidth(0) - &foldcolumn - &numberwidth - (YepNopeSigns()+0 ? 2 : 0)
+            let windowWidth = winwidth(0) - &foldcolumn - &numberwidth - (s:YepNopeSigns()+0 ? 2 : 0)
             let foldSize = v:foldend - v:foldstart + 1
             let foldSizeStr = ' ' . foldSize . ' lines '
             let foldPercentage = printf("[%.1f", (foldSize * 1.0)/line('$') * 100) . "%] "
             let foldLevelStr = repeat('+--', v:foldlevel)
             " fold comments when setting foldmarker as /\*,\*/
-            if match(startLine, '^\s*/\*\(\(\W\|_\)\(\*/\)\@!\)*\s*$') == 0 &&
-                        \match(endLine, '^\s*\(\(/\*\)\@<!\(\W\|_\)\)*\*/\s*$') == 0
-                let temp =matchstr(startLine, '^\(\s*/\*\)\ze\(\(\(\W\|_\)\(\*/\)\@!\)*\)')
+            if !match(startLine, '^\s*/\*\([\*\\/# ]\(\*/\)\@!\)*\s*$') &&
+                        \!match(endLine, '^\s*\(\(/\*\)\@<![\*\\/# ]\)*\*/\s*$')
+                let temp =matchstr(startLine, '^\(\s*/\*\)\ze\(\([\*\\/# ]\(\*/\)\@!\)*\)')
                 let startStr = substitute(temp, '^\t\+', indent, '')
                 let text = startStr . ' ... */'
                 let lineNum = v:foldstart + 1
                 while lineNum < v:foldend
                     let curLine = getline(lineNum)
-                    let comment = substitute(curLine, '^\%(\s\|\W\|_\)*\(.*\)\s*$', '\1', '')
-                    if comment != ''
+                    let comment = s:GetRealStr(curLine, '[0-9a-zA-Z_-]')
+                    if !empty(comment)
                         let text = startStr . ' ' . comment . ' */'
                         break
                     endif
@@ -657,38 +612,44 @@
                     let expansionStr = repeat(".", expansionWidth)
                     return text.expansionStr.foldSizeStr.foldPercentage.foldLevelStr
                 else
-                    let comment=substitute(comment, '.\{' . abs(expansionWidth) . '}$', '', '')
+                    let comment = substitute(comment, '.\{' . abs(expansionWidth) . '}$', '', '')
                     let text = startStr . ' ' . comment . ' */'
                     return text.foldSizeStr.foldPercentage.foldLevelStr
                 endif
             endif
             " fold codes when setting foldmarker as {,}
-            if match(startLine, '{\+\d\=\ze[^{}]*$') != -1 && match(endLine, '}\+\d\=\ze[^{}]*$') != -1
-                let startBracket = matchstr(startLine, '{\+\d\=\ze[^{}]*$')
-                let temp = substitute(startLine, '{\+\d\=[^{}]*$', '', '')
+            if match(startLine, '{\+\d\=\s*$') != -1 && match(endLine, '}\+\d\=\s*$') != -1
+                let startBracket = matchstr(startLine, '{\+\d\=\ze\s*$')
+                let temp = substitute(startLine, '{\+\d\=\s*$', '', '')
                 let startStr = substitute(temp, '^\t\+', indent, '')
-                let endBracket = matchstr(endLine, '}\+\d\=\ze[^{}]*$')
-                let endStr = substitute(endLine, '^.*}\+\d\=', '', '')
-                let text = startStr . startBracket . '...' . endBracket . endStr
+                let endBracket = matchstr(endLine, '}\+\d\=\ze\s*$')
+                let text = startStr . startBracket . '...' . endBracket
                 let expansionWidth = windowWidth - strwidth(text.foldSizeStr.foldPercentage.foldLevelStr)
                 if expansionWidth > 0
                     let expansionStr = repeat(".", expansionWidth)
                     return text.expansionStr.foldSizeStr.foldPercentage.foldLevelStr
                 else
-                    if abs(expansionWidth) <= strwidth(endStr)
-                        let endStr=substitute(endStr, '.\{' . abs(expansionWidth) . '}$', '', '')
-                        let text = startStr . startBracket . '...' . endBracket . endStr
-                        return text.foldSizeStr.foldPercentage.foldLevelStr
-                    else
-                        let startStr=substitute(startStr, '.\{' . (abs(expansionWidth)-strwidth(endStr)) . '}$', '', '')
-                        let text = startStr . startBracket . '...' . endBracket
-                        return text.foldSizeStr.foldPercentage.foldLevelStr
-                    endif
+                    let startStr = substitute(startStr, '.\{' . abs(expansionWidth) . '}$', '', '')
+                    let text = startStr . startBracket . '...' . endBracket
+                    return text.foldSizeStr.foldPercentage.foldLevelStr
                 endif
             endif
         endfunction
 
-        function! YepNopeSigns()
+        function! s:GetRealStr(str, ...)
+            let style = a:0 > 0 ? a:1 : '\w'
+            let startIdx = match(a:str, style)
+            if startIdx == -1
+                return
+            endif
+            let endIdx = strlen(a:str) - 1
+            while match(a:str[endIdx], style) == -1
+                let endIdx -= 1
+            endwhile
+            return strpart(a:str, startIdx, endIdx-startIdx+1)
+        endfunction
+
+        function! s:YepNopeSigns()
             redir => message
             silent! execute 'sign place buffer=' . bufnr('%')
             redir END
@@ -700,27 +661,17 @@
         endfunction
 
         " Set foldtext
-        set foldtext=CustomFoldtext()
+        autocmd filetype vim setlocal foldtext=CustomFoldtext()
 
         " Quickly set foldmethod
-        nnoremap <silent> <LocalLeader>c :<C-U>setlocal foldmethod=marker foldmarker={,} foldtext=CustomFoldtext()<CR>
-        nnoremap <silent> <LocalLeader>v :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
+        nnoremap <silent> <LocalLeader>fc :<C-U>setlocal foldmethod=marker foldmarker={,} foldtext=CustomFoldtext()<CR>
+        nnoremap <silent> <LocalLeader>fv :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
     " }}}2
 
     " Smart NERDTree bookmarks list {{{2
         function! s:SmartNERDTreeBookmark()
             " initialize
-            if !filereadable(g:NERDTreeBookmarksFile)
-                silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . g:NERDTreeBookmarksFile
-                silent! execute 'write!'
-                silent! execute 'bwipeout!'
-                silent! execute 'close!'
-                if !filereadable(g:NERDTreeBookmarksFile)
-                    echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't read!" | echohl None
-                    return
-                endif
-            endif
+            call s:CheckFileReadable(g:NERDTreeBookmarksFile)
             if !exists('s:bmContent')
                 let s:bmContent = readfile(g:NERDTreeBookmarksFile)
             endif
@@ -731,7 +682,7 @@
             " get the max len of bookmark name
             let nameMaxLen = 0
             for line in s:bmContent
-                if line != ''
+                if !empty(line)
                     let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
                     let nameMaxLen = strlen(name) > nameMaxLen ? strlen(name) : nameMaxLen
                 endif
@@ -739,7 +690,7 @@
             " formatting
             let output = []
             for line in s:bmContent
-                if line != ''
+                if !empty(line)
                     let lineNum = !exists('lineNum') ? 1 : (lineNum+1)
                     let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
                     let name = name . repeat(' ', nameMaxLen-strlen(name))
@@ -795,7 +746,7 @@
             silent! execute '%delete _'
             silent! put! = desc
             silent! put = output
-            if getline('$') == ''
+            if empty(getline('$'))
                 silent! execute '$delete _'
             endif
             " let buffer can't be modified
@@ -817,21 +768,20 @@
                     return
                 elseif a:1 ==# 'a'
                     let path = input('Directory to bookmark: ', '', 'dir')
-                    if path != ''
-                        let path = substitute(path, '\\ ', ' ', 'g')
+                    if !empty(path)
+                        let path = substitute(expand(path, 1), '\\ ', ' ', 'g')
                         let path = substitute(path, '[\\/]$', '', '')
-                        let path = substitute(path, '^\~', expand('~'), '')
                     else
                         return
                     endif
                     let name = input('Bookmark as: ')
-                    if name != ''
+                    if !empty(name)
                         let name = substitute(name, ' ', '_', 'g')
                     else
                         return
                     endif
                     let line = name . ' '. path
-                    let match = search(escape(path, ' \'), '', '')
+                    let match = search(escape(path, '\ '), '', '')
                     if match > 2
                         call remove(s:bmContent, match-3)
                         call insert(s:bmContent, line, match-3)
@@ -861,15 +811,14 @@
                         let path = substitute(getline('.'), '^\%([1-9]\.\)\= *.\{-1,} *=> \(.\+\)$', '\1', '')
                         let newPath = input('Change directory to bookmark: ', escape(path, ' ') .
                                     \(s:isWin ? '\' : '/'), 'dir')
-                        if newPath != ''
-                            let newPath = substitute(newPath, '\\ ', ' ', 'g')
+                        if !empty(newPath)
+                            let newPath = substitute(expand(newPath, 1), '\\ ', ' ', 'g')
                             let newPath = substitute(newPath, '[\\/]$', '', '')
-                            let newPath = substitute(newPath, '^\~', expand('~'), '')
                         else
                             let newPath = path
                         endif
                         let newName = input('Change bookmark as: ', name)
-                        if newName != ''
+                        if !empty(newName)
                             let newName = substitute(newName, ' ', '_', 'g')
                         else
                             let newName = name
@@ -883,7 +832,7 @@
                     hide
                     call s:SmartNERDTreeBookmark()
                     return
-                elseif matchstr(a:1, '[1-9]') != ''
+                elseif !empty(matchstr(a:1, '[1-9]'))
                     let idx = a:1+2 > line('$') ? line('$') : a:1+2
                 endif
             else
@@ -896,21 +845,8 @@
         endfunction
 
         function! s:WriteBookmraksFile()
-            if !filereadable(g:NERDTreeBookmarksFile)
-                silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . g:NERDTreeBookmarksFile
-                silent! execute 'write!'
-                silent! execute 'bwipeout!'
-                silent! execute 'close!'
-                if !filereadable(g:NERDTreeBookmarksFile)
-                    echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't read!" | echohl None
-                    return
-                endif
-            endif
-            if filewritable(g:NERDTreeBookmarksFile) == 0
-                echohl WarningMsg | echo "g:NERDTreeBookmarksFile can't write!" | echohl None
-                return
-            endif
+            call s:CheckFileReadable(g:NERDTreeBookmarksFile)
+            call s:CheckFileWritable(g:NERDTreeBookmarksFile)
             if !exists('s:bmContent')
                 let s:bmContent = readfile(g:NERDTreeBookmarksFile)
             endif
@@ -928,7 +864,7 @@
         let s:fallbackColor = 'default'
         " add all favorite color schemes to toggle
         let s:darkColors = ['jellybeans', 'molokai', 'wombat']
-        let s:lightColors = ['mayansmoke', 'github']
+        let s:lightColors = ['mayansmoke']
 
         function! s:SetColor(color)
             if index(s:darkColors, a:color) != -1
@@ -1125,21 +1061,8 @@
         endfunction
 
         function! s:WriteFrameParams()
-            if !filereadable($HOME.'/.vim_record/.vimsize')
-                silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . $HOME.'/.vim_record/.vimsize'
-                silent! execute 'write!'
-                silent! execute 'bwipeout!'
-                silent! execute 'close!'
-                if !filereadable($HOME.'/.vim_record/.vimsize')
-                    echohl WarningMsg | echo ".vimsize can't read!" | echohl None
-                    return
-                endif
-            endif
-            if filewritable($HOME.'/.vim_record/.vimsize') == 0
-                echohl WarningMsg | echo ".vimsize can't write!" | echohl None
-                return
-            endif
+            call s:CheckFileReadable($HOME.'/.vimdb/.vimsize')
+            call s:CheckFileWritable($HOME.'/.vimdb/.vimsize')
             let elem = split(s:frameParams)
             if elem[0] == v:servername
                 let newFrameParams = elem[0] . ' ' . elem[1] . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
@@ -1147,25 +1070,15 @@
                             \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
                             \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
             endif
-            let content = readfile($HOME.'/.vim_record/.vimsize')
+            let content = readfile($HOME.'/.vimdb/.vimsize')
             let content = filter(content, "v:val !~# '^".v:servername." '")
             call add(content, newFrameParams)
-            call writefile(content, $HOME.'/.vim_record/.vimsize')
+            call writefile(content, $HOME.'/.vimdb/.vimsize')
         endfunction
 
         function! s:ReadFrameParams()
-            if !filereadable($HOME.'/.vim_record/.vimsize')
-                silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . $HOME.'/.vim_record/.vimsize'
-                silent! execute 'write!'
-                silent! execute 'bwipeout!'
-                silent! execute 'close!'
-                if !filereadable($HOME.'/.vim_record/.vimsize')
-                    echohl WarningMsg | echo ".vimsize can't read!" | echohl None
-                    return
-                endif
-            endif
-            let content = readfile($HOME.'/.vim_record/.vimsize')
+            call s:CheckFileReadable($HOME.'/.vimdb/.vimsize')
+            let content = readfile($HOME.'/.vimdb/.vimsize')
             let content = filter(content, "v:val =~# '^".v:servername." '")
             if len(content) > 0
                 let s:frameParams = content[-1]
@@ -1186,7 +1099,7 @@
     " }}}2
 
     " Delete buffer while keeping window layout {{{2
-        function! s:BClose(bang, buffer)
+        function! s:CloseCurrentBuffer(bang, buffer)
             if empty(a:buffer)
                 let bTarget = bufnr('%')
             elseif a:buffer =~ '^\d\+$'
@@ -1252,7 +1165,7 @@
             execute wCurrent . 'wincmd w'
         endfunction
 
-        function! s:BHiddenClose()
+        function! s:CloseAllHiddenBuffers()
             let total = 0
             let wCurrent = winnr()
             for w in range(1, winnr('$'))
@@ -1266,17 +1179,17 @@
             endfor
             execute wCurrent . 'wincmd w'
             if total > 0
-                echo 'Deleted ' . total . ' hidden buffers'
+                echo total . ' hidden buffers deleted.'
             else
-                echo 'No hidden buffers exist'
+                echo 'No hidden buffers exist.'
             endif
         endfunction
 
-        command! -bang -complete=buffer -nargs=? BClose call s:BClose('<bang>', '<args>')
-        nnoremap <silent> <LocalLeader>bc :BClose<CR>
+        command! -bang -complete=buffer -nargs=? CloseCurrentBuffer call s:CloseCurrentBuffer('<bang>', '<args>')
+        nnoremap <silent> <LocalLeader>cc :CloseCurrentBuffer<CR>
 
-        command! -bang BHiddenClose call s:BHiddenClose()
-        nnoremap <silent> <LocalLeader>bh :BHiddenClose<CR>
+        command! -bang CloseAllHiddenBuffers call s:CloseAllHiddenBuffers()
+        nnoremap <silent> <LocalLeader>ca :CloseAllHiddenBuffers<CR>
     " }}}2
 
     " Remaps arrow keys to indent/unindent and add/remove blank lines {{{2
@@ -1351,27 +1264,75 @@
         inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
     " }}}2
 
+    " Preview markdown files {{{2
+        function! s:PreviewMarkdown()
+            if !executable('pandoc')
+                echohl ErrorMsg | echo 'Please install pandoc first.' | echohl None
+                return
+            endif
+            if s:isWin
+                let BROWSER_COMMAND = 'cmd.exe /c start ""'
+            elseif s:isLinux
+                let BROWSER_COMMAND = 'xdg-open'
+            elseif s:isMac
+                let BROWSER_COMMAND = 'open'
+            endif
+            let output_file = tempname() . '.html'
+            let input_file = tempname() . '.md'
+            let css_file = 'file://' . expand($HOME . '/.vimdb/pandoc/github.css', 1)
+            " Convert buffer to UTF-8 before running pandoc
+            let original_encoding = &fileencoding
+            let original_bomb = &bomb
+            silent! execute 'set fileencoding=utf-8 nobomb'
+            " Generate html file for preview
+            let content = getline(1, '$')
+            let newContent = []
+            for line in content
+                let str = matchstr(line, '\(!\[.*\](\)\@<=.\+\.\%(png\|jpe\=g\|gif\)')
+                if str != "" && match(str, '^https\=:\/\/') == -1
+                    let newLine = substitute(line, '\(!\[.*\]\)(' . str . ')',
+                                \'\1(file://' . escape(expand("%:p:h", 1), '\') . 
+                                \(s:isWin ? '\\\\' : '/') . 
+                                \escape(expand(str, 1), '\') . ')', 'g')
+                else
+                    let newLine = line
+                endif
+                call add(newContent, newLine)
+            endfor
+            call writefile(newContent, input_file)
+            silent! execute '!pandoc -f markdown -t html5 -s -S -c "' . css_file . '" -o "' . output_file .'" "' . input_file . '"'
+            call delete(input_file)
+            " Change encoding back
+            silent! execute 'set fileencoding=' . original_encoding . ' ' . original_bomb
+            " Preview 
+            silent! execute '!' . BROWSER_COMMAND . ' "' . output_file . '"'
+            execute input('Press ENTER to continue...')
+            echo
+            call delete(output_file)
+        endfunction
+
+        nnoremap <silent> <LocalLeader>p :call <SID>PreviewMarkdown()<CR>
+    " }}}2
+
     " Customize statusline {{{2
-        function! StlPath()
-            let l:str = ''
+        function! STLPath()
             if &l:buftype == 'nofile'
                 let l:str = '<Scratch>'
             elseif &l:buftype == 'quickfix'
                 let l:str = '<quickfix>'
             elseif &l:buftype == 'help'
                 let l:str = '<help>'
-            elseif &l:buftype == ''
-                if expand("%:p:h") == getcwd()
-                    let l:str = expand("%:p")
+            elseif empty(&l:buftype)
+                if expand("%:p:h", 1) == getcwd()
+                    let l:str = expand("%:p", 1)
                 else
-                    let l:str = '<' . getcwd() . '> ' . expand("%:p:t")
+                    let l:str = '<' . getcwd() . '> ' . expand("%:p:t", 1)
                 endif
             endif
-            return l:str
+            return exists('l:str') ? l:str : ''
         endfunction
 
-        function! StlSign1()
-            let l:str = ''
+        function! STLStatus()
             if &l:readonly
                 if &l:modified
                     let l:str = '[RO,+]'
@@ -1383,12 +1344,11 @@
                     let l:str = '[+]'
                 endif
             endif
-            return l:str
+            return exists('l:str') ? l:str : ''
         endfunction
 
-        function! StlSign2()
-            let l:str = ''
-            if &l:fileencoding != 'utf-8' && &l:fileencoding != ''
+        function! STLFormat()
+            if &l:fileencoding != 'utf-8' && !empty(&l:fileencoding)
                 if &l:fileformat != 'unix'
                     let l:str = '[' . &l:fileencoding . ',' . &l:fileformat . ']'
                 else
@@ -1399,13 +1359,13 @@
                     let l:str = '[' . &l:fileformat . ']'
                 endif
             endif
-            return l:str
+            return exists('l:str') ? l:str : ''
         endfunction
     "}}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
         function! s:InitializeDirectories()
-            let parent = $HOME.'/.vim_record'
+            let parent = $HOME.'/.vimdb'
             " backupdir -- directory for backup files
             " viewdir -- directory for view files
             " directory -- directory for swap files
@@ -1417,12 +1377,12 @@
             for [settingName, dirName] in items(dirList)
                 let dir = parent . '/' . dirName
                 if isdirectory(dir)
-                    execute 'set ' . settingName . '=' . dir
+                    execute 'set ' . settingName . '=' . escape(expand(dir, 1), '\ ')
                     continue
                 else
                     if exists('*mkdir')
                         call mkdir(dir, 'p')
-                        execute 'set ' . settingName . '=' . dir
+                        execute 'set ' . settingName . '=' . escape(expand(dir, 1), '\ ')
                     else
                         echohl WarningMsg | echo 'Unable to create directory ' . dir . ' ,try to create manually.' | echohl None
                     endif
@@ -1433,6 +1393,30 @@
         call s:InitializeDirectories()
     " }}}2
 
+    " Helper functions {{{2
+        " Check file whether is readable
+        function! s:CheckFileReadable(file)
+            if !filereadable(a:file)
+                silent! execute 'keepalt botright 1new'
+                silent! execute 'edit ' . a:file
+                silent! execute 'write!'
+                silent! execute 'bwipeout!'
+                silent! execute 'close!'
+                if !filereadable(a:file)
+                    echohl WarningMsg | echo a:file . " can't read!" | echohl None
+                    return
+                endif
+            endif
+        endfunction
+
+        " Check file whether is writable
+        function! s:CheckFileWritable(file)
+            if !filewritable(a:file)
+                echohl WarningMsg | echo a:file . " can't write!" | echohl None
+                return
+            endif
+        endfunction
+    " }}}2
 " }}}1
 
 " vim: set shiftwidth=4 tabstop=4 softtabstop=4 expandtab foldmethod=marker:
