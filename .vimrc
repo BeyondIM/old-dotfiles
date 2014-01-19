@@ -37,9 +37,13 @@
         NeoBundle 'scrooloose/nerdcommenter'
         NeoBundle 'mileszs/ack.vim'
         NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}} 
+        NeoBundle 'terryma/vim-multiple-cursors'
+        NeoBundle 'BeyondIM/vim-util'
+        NeoBundle 'BeyondIM/nerdtree-smart-bookmarks'
         " completion
-        NeoBundle 'Valloric/YouCompleteMe'
-        NeoBundle 'SirVer/ultisnips'
+        NeoBundle 'Shougo/neocomplete', {'depends':'Shougo/vimproc'}
+        NeoBundle 'Shougo/neosnippet'
+        NeoBundle 'honza/vim-snippets'
         " html
         NeoBundle 'othree/html5.vim'
         " css
@@ -140,9 +144,9 @@
         set ruler
          " Always has a status line
         set laststatus=2
-        set statusline=[#%n]%(\ %{STLPath()}%)
-        set statusline+=%(\ %{STLStatus()}%)
-        set statusline+=%(\ %{STLFormat()}%)
+        set statusline=[#%n]%(\ %{STLBtPt()}%)
+        set statusline+=%(\ %{STLRoMod()}%)
+        set statusline+=%(\ %{STLFencFf()}%)
         if exists(':SyntasticCheck')
             set statusline+=%(\ %{SyntasticStatuslineFlag()}%)
         endif
@@ -390,18 +394,18 @@
         let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
     " }}}2
 
+    " Ack {{{2
+        if executable('ag')
+            let g:ackprg = 'ag --nogroup --nocolor --column'
+        endif
+    " }}}2
+
     " YankRing {{{2
         let g:yankring_history_dir = $HOME.'/.vimdb'
         nnoremap <silent> <Leader>y :YRGetElem<CR>
         function! YRRunAfterMaps()
             nnoremap <silent> Y :<C-U>YRYankCount 'y$'<CR>
         endfunction
-    " }}}2
-
-    " Vim-javascript {{{2
-        let g:html_indent_inctags = "html,body,head,tbody"
-        let g:html_indent_script1 = "inc"
-        let g:html_indent_style1 = "inc"
     " }}}2
 
     " Gundo {{{2
@@ -448,15 +452,58 @@
                     \ }
     " }}}2
 
-    " YouCompleteMe {{{2
-        let g:ycm_key_invoke_completion = '<C-l>'
-    " }}}2
+    " Neocomplete {{{2
+        let g:neocomplete#enable_at_startup = 1
+        let g:neocomplete#enable_smart_case = 1
+        let g:neocomplete#use_vimproc = 1
+        let g:neocomplete#sources#syntax#min_keyword_length = 3
+        let g:neocomplete#data_directory = $HOME.'/.vimdb/.neocomplete'
+        let s:ignoredBufs = '^\[.\+\]\|__.\+__\|NERD_tree_\|ControlP'
+        let g:neocomplete#lock_buffer_name_pattern = s:ignoredBufs
+        let g:neocomplete#force_overwrite_completefunc = 1
 
-    " UltiSnips {{{2
-        let g:UltiSnipsSnippetDirectories=["UltiSnips", ".mysnips"]
-        let g:UltiSnipsExpandTrigger="<C-j>"
-        let g:UltiSnipsJumpForwardTrigger="<C-j>"
-        let g:UltiSnipsJumpBackwardTrigger="<C-k>"
+        " Define keyword, for minor languages
+        if !exists('g:neocomplete_keyword_patterns')
+            let g:neocomplete_keyword_patterns = {}
+        endif
+        let g:neocomplete_keyword_patterns['default'] = '\h\w*'        
+
+        " key mappings
+        inoremap <expr><C-g> neocomplete#undo_completion()
+        inoremap <expr><C-l> neocomplete#complete_common_string()
+        inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
+        inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
+
+        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
+
+        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
+                    \ pumvisible() ? neocomplete#close_popup() : "\<CR>"
+
+        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+
+        " Enable omni completion
+        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+
+        if !exists('g:neocomplete#force_omni_input_patterns')
+            let g:neocomplete#force_omni_input_patterns = {}
+        endif
+        let g:neocomplete#force_omni_input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
+
+        " Disable neosnippet-snippets
+        let g:neosnippet#disable_runtime_snippets = {'_' : 1}
+
+        " For snippet_complete marker
+        if has('conceal')
+            set conceallevel=2 concealcursor=i
+        endif
+
+        "Use snipmate snippets
+        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/vim-snippets/snippets'
+        let g:neosnippet#enable_snipmate_compatibility = 1
     " }}}2
 
     " Syntastic {{{2
@@ -482,12 +529,23 @@
         nmap <Plug>IgnoreMarkSearchPrev <Plug>MarkSearchPrev
     " }}}2
 
+    " Vim-javascript {{{2
+        let g:html_indent_inctags = "html,body,head,tbody"
+        let g:html_indent_script1 = "inc"
+        let g:html_indent_style1 = "inc"
+    " }}}2
+
     " Vim-ruby {{{2
         let g:rubycomplete_rails = 1
         let g:rubycomplete_classes_in_global = 1
         let g:rubycomplete_buffer_loading = 1
         let g:rubycomplete_include_object = 1
         let g:rubycomplete_include_objectspace = 1
+    " }}}2
+
+    " Vim-util {{{2
+        let g:darkColors = ['jellybeans', 'molokai', 'wombat']
+        let g:lightColors = ['mayansmoke']
     " }}}2
 
 " }}}1
@@ -668,436 +726,6 @@
         nnoremap <silent> <LocalLeader>fv :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
     " }}}2
 
-    " Smart NERDTree bookmarks list {{{2
-        function! s:SmartNERDTreeBookmark()
-            " initialize
-            call s:CheckFileReadable(g:NERDTreeBookmarksFile)
-            if !exists('s:bmContent')
-                let s:bmContent = readfile(g:NERDTreeBookmarksFile)
-            endif
-            let desc = repeat(' ', 3) .
-                        \'1-9 or CR = open, a = add, d = delete, D = delete all, e = edit, q or ESC = quit' .
-                        \repeat(' ', 3)
-            let desc = desc . "\n" . repeat('-', strlen(desc))
-            " get the max len of bookmark name
-            let nameMaxLen = 0
-            for line in s:bmContent
-                if !empty(line)
-                    let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
-                    let nameMaxLen = strlen(name) > nameMaxLen ? strlen(name) : nameMaxLen
-                endif
-            endfor
-            " formatting
-            let output = []
-            for line in s:bmContent
-                if !empty(line)
-                    let lineNum = !exists('lineNum') ? 1 : (lineNum+1)
-                    let name = substitute(line, '^\(.\{-1,}\) .\+$', '\1', '')
-                    let name = name . repeat(' ', nameMaxLen-strlen(name))
-                    let path = substitute(line, '^.\{-1,} \(.\+\)$', '\1', '')
-                    if lineNum <= 9
-                        let newLine = lineNum. '. ' . name . ' => ' . path
-                    else
-                        let newLine = repeat(' ', 3) . name . ' => ' . path
-                    endif
-                    call add(output, newLine)
-                endif
-            endfor
-            " always switch to the [SmartNERDTreeBookmark] buffer if exists
-            let s:bmBufferId = -1
-            let s:bmBufferName = '[SmartNERDTreeBookmark]'
-            if bufwinnr(s:bmBufferId) == -1
-                silent! execute 'keepalt botright ' . (len(output)>0 ? len(output)+2 : 3) . 'split'
-                silent! execute 'edit ' . s:bmBufferName
-                let s:bmBufferId = bufnr('%') + 0
-            else
-                silent! execute bufwinnr(s:bmBufferId) . 'wincmd w'
-            endif
-            " set buffer environment
-            setlocal buftype=nofile
-            setlocal bufhidden=hide
-            setlocal noswapfile
-            setlocal nowrap
-            setlocal nonumber
-            setlocal norelativenumber
-            setlocal nobuflisted
-            setlocal statusline=%f%=Line:\ %l/%L[%p%%]\ Col:\ %c
-            setlocal noreadonly
-            setlocal modifiable
-            " key mapping
-            mapclear <buffer>
-            nnoremap <buffer> <silent> <CR> :<C-U>call <SID>HandleBookmark()<CR>
-            nnoremap <buffer> <silent> 1 :<C-U>call <SID>HandleBookmark(1)<CR>
-            nnoremap <buffer> <silent> 2 :<C-U>call <SID>HandleBookmark(2)<CR>
-            nnoremap <buffer> <silent> 3 :<C-U>call <SID>HandleBookmark(3)<CR>
-            nnoremap <buffer> <silent> 4 :<C-U>call <SID>HandleBookmark(4)<CR>
-            nnoremap <buffer> <silent> 5 :<C-U>call <SID>HandleBookmark(5)<CR>
-            nnoremap <buffer> <silent> 6 :<C-U>call <SID>HandleBookmark(6)<CR>
-            nnoremap <buffer> <silent> 7 :<C-U>call <SID>HandleBookmark(7)<CR>
-            nnoremap <buffer> <silent> 8 :<C-U>call <SID>HandleBookmark(8)<CR>
-            nnoremap <buffer> <silent> 9 :<C-U>call <SID>HandleBookmark(9)<CR>
-            nnoremap <buffer> <silent> q :<C-U>call <SID>HandleBookmark('q')<CR>
-            nnoremap <buffer> <silent> <ESC> :<C-U>call <SID>HandleBookmark('q')<CR>
-            nnoremap <buffer> <silent> a :<C-U>call <SID>HandleBookmark('a')<CR>
-            nnoremap <buffer> <silent> d :<C-U>call <SID>HandleBookmark('d')<CR>
-            nnoremap <buffer> <silent> D :<C-U>call <SID>HandleBookmark('D')<CR>
-            nnoremap <buffer> <silent> e :<C-U>call <SID>HandleBookmark('e')<CR>
-            " show bookmarks
-            silent! execute '%delete _'
-            silent! put! = desc
-            silent! put = output
-            if empty(getline('$'))
-                silent! execute '$delete _'
-            endif
-            " let buffer can't be modified
-            setlocal readonly
-            setlocal nomodifiable
-        endfunction
-
-        function! s:HandleBookmark(...)
-            " switch to [SmartNERDTreeBookmark] buffer
-            if bufwinnr(s:bmBufferId) == -1
-                echohl WarningMsg | echo 'Failed to switch to NERDTree bookmarks list buffer!' | echohl None
-                return
-            else
-                silent! execute bufwinnr(s:bmBufferId) . 'wincmd w'
-            endif
-            if a:0 > 0
-                if a:1 ==# 'q'
-                    hide
-                    return
-                elseif a:1 ==# 'a'
-                    let path = input('Directory to bookmark: ', '', 'dir')
-                    if !empty(path)
-                        let path = substitute(expand(path, 1), '\\ ', ' ', 'g')
-                        let path = substitute(path, '[\\/]$', '', '')
-                    else
-                        return
-                    endif
-                    let name = input('Bookmark as: ')
-                    if !empty(name)
-                        let name = substitute(name, ' ', '_', 'g')
-                    else
-                        return
-                    endif
-                    let line = name . ' '. path
-                    let match = search(escape(path, '\ '), '', '')
-                    if match > 2
-                        call remove(s:bmContent, match-3)
-                        call insert(s:bmContent, line, match-3)
-                    else
-                        call insert(s:bmContent, line)
-                    endif
-                    hide
-                    call s:SmartNERDTreeBookmark()
-                    return
-                elseif a:1 ==# 'd'
-                    if line('.') > 2
-                        call remove(s:bmContent, line('.')-3)
-                    else
-                        return
-                    endif
-                    hide
-                    call s:SmartNERDTreeBookmark()
-                    return
-                elseif a:1 ==# 'D'
-                    call remove(s:bmContent, 0, -1)
-                    hide
-                    call s:SmartNERDTreeBookmark()
-                    return
-                elseif a:1 ==# 'e'
-                    if line('.') > 2
-                        let name = substitute(getline('.'), '^\%([1-9]\.\)\= *\(.\{-1,}\) *=> .\+$', '\1', '')
-                        let path = substitute(getline('.'), '^\%([1-9]\.\)\= *.\{-1,} *=> \(.\+\)$', '\1', '')
-                        let newPath = input('Change directory to bookmark: ', escape(path, ' ') .
-                                    \(s:isWin ? '\' : '/'), 'dir')
-                        if !empty(newPath)
-                            let newPath = substitute(expand(newPath, 1), '\\ ', ' ', 'g')
-                            let newPath = substitute(newPath, '[\\/]$', '', '')
-                        else
-                            let newPath = path
-                        endif
-                        let newName = input('Change bookmark as: ', name)
-                        if !empty(newName)
-                            let newName = substitute(newName, ' ', '_', 'g')
-                        else
-                            let newName = name
-                        endif
-                        let newLine = newName . ' '. newPath
-                        call remove(s:bmContent, line('.')-3)
-                        call insert(s:bmContent, newLine, line('.')-3)
-                    else
-                        return
-                    endif
-                    hide
-                    call s:SmartNERDTreeBookmark()
-                    return
-                elseif !empty(matchstr(a:1, '[1-9]'))
-                    let idx = a:1+2 > line('$') ? line('$') : a:1+2
-                endif
-            else
-                let idx = line('.') > 2 ? line('.') : 3
-            endif
-            let path = substitute(getline(idx), '^\%([1-9]\.\)\= *.\{-1,} *=> \(.\+\)$', '\1', '')
-            let path = escape(path, ' ') . (s:isWin ? '\' : '/')
-            hide
-            execute 'NERDTree ' . path
-        endfunction
-
-        function! s:WriteBookmraksFile()
-            call s:CheckFileReadable(g:NERDTreeBookmarksFile)
-            call s:CheckFileWritable(g:NERDTreeBookmarksFile)
-            if !exists('s:bmContent')
-                let s:bmContent = readfile(g:NERDTreeBookmarksFile)
-            endif
-            call writefile(s:bmContent, g:NERDTreeBookmarksFile)
-        endfunction
-
-        " Save bookmark when leaving
-        autocmd VimLeavePre * call s:WriteBookmraksFile()
-
-        nnoremap <silent> <Leader>nb :<C-U>call <SID>SmartNERDTreeBookmark()<CR>
-    " }}}2
-
-    " Toggle color schemes {{{2
-        " set default color scheme
-        let s:fallbackColor = 'default'
-        " add all favorite color schemes to toggle
-        let s:darkColors = ['jellybeans', 'molokai', 'wombat']
-        let s:lightColors = ['mayansmoke']
-
-        function! s:SetColor(color)
-            if index(s:darkColors, a:color) != -1
-                let bg = 'dark'
-            elseif index(s:lightColors, a:color) != -1
-                let bg = 'light'
-            else
-                silent! execute 'colorscheme '.s:fallbackColor
-                let &background = 'light'
-                return
-            endif
-            call s:HandleColor(a:color, bg)
-        endfunction
-
-        function! s:SetDarkColor(handle)
-            if a:handle == '+'
-                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
-                    if &background == 'light'
-                        let curColor = g:colors_name
-                    else
-                        let idx = index(s:darkColors, g:colors_name)
-                        let curColor = idx<(len(s:darkColors)-1) ? s:darkColors[idx+1] : s:darkColors[0]
-                    endif
-                else
-                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[0]
-                endif
-            elseif a:handle == '-'
-                if exists('g:colors_name') && index(s:darkColors, g:colors_name) != -1
-                    if &background == 'light'
-                        let curColor = g:colors_name
-                    else
-                        let idx = index(s:darkColors, g:colors_name)
-                        let curColor = (idx>0) ? s:darkColors[idx-1] : s:darkColors[-1]
-                    endif
-                else
-                    let curColor = exists('s:lastDarkColor') ? s:lastDarkColor : s:darkColors[-1]
-                endif
-            endif
-            call s:HandleColor(curColor, 'dark')
-            if exists('g:colors_name')
-                redraw
-                echo 'Current color scheme: '.g:colors_name
-            endif
-        endfunction
-
-        function! s:SetLightColor(handle)
-            if a:handle == '+'
-                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
-                    if &background == 'dark'
-                        let curColor = g:colors_name
-                    else
-                        let idx = index(s:lightColors, g:colors_name)
-                        let curColor = idx<(len(s:lightColors)-1) ? s:lightColors[idx+1] : s:lightColors[0]
-                    endif
-                else
-                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[0]
-                endif
-            elseif a:handle == '-'
-                if exists('g:colors_name') && index(s:lightColors, g:colors_name) != -1
-                    if &background == 'dark'
-                        let curColor = g:colors_name
-                    else
-                        let idx = index(s:lightColors, g:colors_name)
-                        let curColor = (idx>0) ? s:lightColors[idx-1] : s:lightColors[-1]
-                    endif
-                else
-                    let curColor = exists('s:lastLightColor') ? s:lastLightColor : s:lightColors[-1]
-                endif
-            endif
-            call s:HandleColor(curColor, 'light')
-            if exists('g:colors_name')
-                redraw
-                echo 'Current color scheme: '.g:colors_name
-            endif
-        endfunction
-
-        function! s:IsValidColor(color)
-            let colorsPathList = globpath(&runtimepath, 'colors/*.vim', 1)
-            let colorsList = map(split(colorsPathList, '\n'), "fnamemodify(v:val, ':t:r')")
-            if index(colorsList, a:color) != -1
-                return 1
-            else
-                return
-            endif
-        endfunction
-
-        function! s:HandleColor(color,bg)
-            if !s:IsValidColor(a:color)
-                echohl ErrorMsg | echo 'Color scheme: '.a:color.' is invalid.' | echohl None
-                return
-            else
-                silent! execute 'colorscheme '.a:color
-            endif
-            if a:bg == 'dark'
-                let &background = 'dark'
-                let s:lastDarkColor = a:color
-            elseif a:bg == 'light'
-                let &background = 'light'
-                let s:lastLightColor = a:color
-            endif
-        endfunction
-
-        nnoremap <silent> <C-F10> :<C-U>call <SID>SetDarkColor('+')<CR>
-        nnoremap <silent> <M-F10> :<C-U>call <SID>SetDarkColor('-')<CR>
-        nnoremap <silent> <C-F11> :<C-U>call <SID>SetLightColor('+')<CR>
-        nnoremap <silent> <M-F11> :<C-U>call <SID>SetLightColor('-')<CR>
-    " }}}2
-
-    " Adjust window size and opacity {{{2
-        function! s:AdjustFrameAlpha(handle)
-            if !has('gui_running')
-                return
-            endif
-            if !exists('s:frameParams')
-                call s:InitFrameParams()
-            endif
-            let elem = split(s:frameParams)
-            if elem[0] == v:servername
-                let alpha = elem[2]+0
-                if a:handle == '+'
-                    if s:isWin && alpha < 255
-                        let alpha = alpha+1
-                    elseif s:isMac && alpha > 0
-                        let alpha = alpha-1
-                    endif
-                endif
-                if a:handle == '-'
-                    if s:isWin && alpha > 0
-                        let alpha = alpha-1
-                    elseif s:isMac && alpha < 100
-                        let alpha = alpha+1
-                    endif
-                endif
-                let s:frameParams = elem[0] . ' ' . elem[1] . ' ' . alpha . ' ' . &lines . ' ' . &columns . ' ' .
-                            \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                            \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
-                            \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
-                call s:RestoreFrameParams()
-            endif
-        endfunction
-
-        function! s:AdjustFrameSize()
-            if !has('gui_running')
-                return
-            endif
-            if !exists('s:frameParams')
-                call s:InitFrameParams()
-            endif
-            let elem = split(s:frameParams)
-            if elem[0] == v:servername
-                let isMaximized = elem[1]+0 ? 0 : 1
-                let s:frameParams = elem[0] . ' ' . isMaximized . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
-                            \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                            \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
-                            \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
-                call s:RestoreFrameParams()
-            endif
-        endfunction
-
-        function! s:InitFrameParams()
-            let s:frameParams = v:servername . ' 0 ' . (s:isWin ? '255 ' : '0 ') . &lines . ' ' . &columns . ' ' .
-                        \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                        \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
-                        \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
-        endfunction
-
-        function! s:RestoreFrameParams()
-            let elem = split(s:frameParams)
-            if elem[0] == v:servername
-                if elem[1]+0
-                    if s:isWin
-                        call libcallnr("vimtweak.dll", "EnableMaximize", 1)
-                        call libcallnr("vimtweak.dll", "EnableCaption", 0)
-                    elseif s:isMac
-                        let &g:fullscreen = 1
-                    endif
-                else
-                    silent! execute 'set lines=' . elem[3] . ' columns=' . elem[4]
-                    silent! execute 'winpos ' . elem[5] . ' ' .  elem[6]
-                    if s:isWin
-                        call libcallnr("vimtweak.dll", "EnableCaption", 1)
-                        call libcallnr("vimtweak.dll", "EnableMaximize", 0)
-                    elseif s:isMac
-                        let &g:fullscreen = 0
-                    endif
-                endif
-                if s:isWin
-                    call libcallnr("vimtweak.dll", "SetAlpha", elem[2]+0)
-                elseif s:isMac
-                    let &g:transparency = elem[2]+0
-                endif
-                call s:SetColor(elem[7])
-            endif
-        endfunction
-
-        function! s:WriteFrameParams()
-            call s:CheckFileReadable($HOME.'/.vimdb/.vimsize')
-            call s:CheckFileWritable($HOME.'/.vimdb/.vimsize')
-            let elem = split(s:frameParams)
-            if elem[0] == v:servername
-                let newFrameParams = elem[0] . ' ' . elem[1] . ' ' . elem[2] . ' ' . &lines . ' ' . &columns . ' ' .
-                            \(getwinposx()<0 ? 0 : getwinposx()) . ' ' .
-                            \(getwinposy()<0 ? 0 : getwinposy()) . ' ' .
-                            \(exists('g:colors_name') ? g:colors_name : s:fallbackColor)
-            endif
-            let content = readfile($HOME.'/.vimdb/.vimsize')
-            let content = filter(content, "v:val !~# '^".v:servername." '")
-            call add(content, newFrameParams)
-            call writefile(content, $HOME.'/.vimdb/.vimsize')
-        endfunction
-
-        function! s:ReadFrameParams()
-            call s:CheckFileReadable($HOME.'/.vimdb/.vimsize')
-            let content = readfile($HOME.'/.vimdb/.vimsize')
-            let content = filter(content, "v:val =~# '^".v:servername." '")
-            if len(content) > 0
-                let s:frameParams = content[-1]
-            else
-                call s:InitFrameParams()
-            endif
-            call s:RestoreFrameParams()
-        endfunction
-
-        if s:isWin && !empty(glob($VIMRUNTIME.'/vimtweak.dll')) || s:isMac
-            nnoremap <silent> <C-F12> :<C-U>call <SID>AdjustFrameSize()<CR>
-            nnoremap <silent> <C-Left> :<C-U>call <SID>AdjustFrameAlpha('-')<CR>
-            nnoremap <silent> <C-Right> :<C-U>call <SID>AdjustFrameAlpha('+')<CR>
-
-            autocmd VimEnter * call s:ReadFrameParams()
-            autocmd VimLeavePre * call s:WriteFrameParams()
-        endif
-    " }}}2
-
     " Delete buffer while keeping window layout {{{2
         function! s:CloseCurrentBuffer(bang, buffer)
             if empty(a:buffer)
@@ -1110,7 +738,7 @@
             endif
             if bTarget < 0
                 echohl ErrorMsg
-                echo 'No matching buffer for Show the line and column number of the cursor position, separated by a' . a:buffer
+                echo 'No matching buffer for ' . a:buffer
                 echohl None
                 return
             endif
@@ -1315,7 +943,7 @@
     " }}}2
 
     " Customize statusline {{{2
-        function! STLPath()
+        function! STLBtPt()
             if &l:buftype == 'nofile'
                 let l:str = '<Scratch>'
             elseif &l:buftype == 'quickfix'
@@ -1332,7 +960,7 @@
             return exists('l:str') ? l:str : ''
         endfunction
 
-        function! STLStatus()
+        function! STLRoMod()
             if &l:readonly
                 if &l:modified
                     let l:str = '[RO,+]'
@@ -1347,7 +975,7 @@
             return exists('l:str') ? l:str : ''
         endfunction
 
-        function! STLFormat()
+        function! STLFencFf()
             if &l:fileencoding != 'utf-8' && !empty(&l:fileencoding)
                 if &l:fileformat != 'unix'
                     let l:str = '[' . &l:fileencoding . ',' . &l:fileformat . ']'
@@ -1361,6 +989,42 @@
             endif
             return exists('l:str') ? l:str : ''
         endfunction
+
+        function! s:GetOrigSTLInfo()
+            redir => message
+            silent! execute 'highlight StatusLine'
+            redir END
+            if match(message, 'gui=') != -1
+                let gui = substitute(message, '.*gui=\(.\{-}\) .*$', '\1', '')
+            else
+                let gui = 'Bold'
+            endif
+            if match(message, 'guifg=') != -1
+                let guifg = substitute(message, '.*guifg=\(.\{-}\) .*$', '\1', '')
+            else
+                let guifg = 'White'
+            endif
+            if match(message, 'guibg=') != -1
+                let guibg = substitute(message, '.*guibg=\(.*\)$', '\1', '')
+            else
+                let guibg = 'Blue'
+            endif
+            let s:origSTLInfo = {'gui': gui, 'guifg': guifg, 'guibg': guibg}
+        endfunction
+
+        function! s:SetSTLColor(mode)
+            call s:GetOrigSTLInfo()
+            if a:mode ==# 'i'
+                execute 'highlight StatusLine gui=Bold guifg=White guibg=Purple'
+            elseif a:mode =~# '\(r\|v\)'
+                execute 'highlight StatusLine gui=Bold guifg=White guibg=Orange'
+            else
+                execute 'highlight StatusLine gui=' . s:origSTLInfo['gui'] . ' guifg=' . s:origSTLInfo['guifg'] . ' guibg=' . s:origSTLInfo['guibg']
+            endif
+        endfunction
+
+        autocmd InsertEnter * call s:SetSTLColor(v:insertmode)
+        autocmd InsertLeave * execute 'highlight StatusLine gui=' . s:origSTLInfo['gui'] . ' guifg=' . s:origSTLInfo['guifg'] . ' guibg=' . s:origSTLInfo['guibg']
     "}}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
