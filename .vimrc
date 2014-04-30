@@ -21,55 +21,14 @@
         endif
     " }}}2
 
-    " NeoBundle {{{2
-        set runtimepath+=$HOME/.vim/bundle/neobundle.vim/
-        call neobundle#rc(expand('~/.vim/bundle/'))
-        " Let NeoBundle manage NeoBundle
-        NeoBundleFetch 'Shougo/neobundle.vim'
-        " colorscheme
-        NeoBundle 'nanotech/jellybeans.vim'
-        NeoBundle 'BeyondIM/molokai'
-        " enhancement
-        NeoBundle 'kien/ctrlp.vim'
-        NeoBundle 'tpope/vim-surround'
-        NeoBundle 'tpope/vim-repeat'
-        NeoBundle 'scrooloose/nerdtree'
-        NeoBundle 'scrooloose/nerdcommenter'
-        NeoBundle 'mileszs/ack.vim'
-        NeoBundleLazy 'sjl/gundo.vim', {'autoload':{'commands':'GundoToggle'}} 
-        NeoBundle 'terryma/vim-multiple-cursors'
-        NeoBundle 'BeyondIM/vim-util'
-        NeoBundle 'BeyondIM/nerdtree-smart-bookmarks'
-        " completion
-        NeoBundle 'Shougo/neocomplete', {'depends':'Shougo/vimproc'}
-        NeoBundle 'Shougo/neosnippet'
-        NeoBundle 'honza/vim-snippets'
-        " html
-        NeoBundle 'othree/html5.vim'
-        " css
-        NeoBundle 'JulesWang/css.vim'
-        " javascript
-        NeoBundle 'pangloss/vim-javascript'
-        " ruby
-        NeoBundle 'vim-ruby/vim-ruby'
-        NeoBundle 'tpope/vim-rails'
-        " markdown
-        NeoBundle 'tpope/vim-markdown'
-        " gist
-        NeoBundleLazy 'mattn/gist-vim', {'depends':'mattn/webapi-vim', 'autoload':{'commands':'Gist'}}
-        " tags
-        NeoBundle 'mozilla/doctorjs', {'rev': '1062dd3'}
-        NeoBundle 'majutsushi/tagbar'
-        " syntax check
-        NeoBundle 'scrooloose/syntastic'
-    " }}}2
+    " Runtimepath render {{{2
+        runtime bundle/vim-pathogen/autoload/pathogen.vim
+        execute pathogen#infect()
 
-    " Script {{{2
         set runtimepath+=$HOME/.vim/scripts/scriptbundle/
         " Set reverse proxy server or http, socks proxy if can't access vim official site
         " let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
         " let g:curlProxy = 'socks://127.0.0.1:8888'
-        let g:curlProxy = 'http://127.0.0.1:8087'
         call scriptbundle#rc()
         " yankring
         Script '1234'
