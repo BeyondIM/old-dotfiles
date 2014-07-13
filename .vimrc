@@ -8,15 +8,14 @@
         " Set viminfo path
         set viminfo+=n$HOME/.vimdb/.viminfo
         " Check system
-        let s:isWin = has('win32') || has('win64')
-        let s:isMac = has('unix') && substitute(system('uname'), '\n', '', '') =~# 'Darwin\|Mac' 
-        let s:isLinux = has('unix') && substitute(system('uname'), '\n', '', '') ==# 'Linux' 
+        let g:isWin = has('win32') || has('win64')
+        let g:isMac = has('mac') || has('macunix')
         " Remove all autocommands to avoid sourcing them twice
         autocmd!
     " }}}2
 
     " Windows Compatible {{{2
-        if s:isWin
+        if g:isWin
             set runtimepath=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
         endif
     " }}}2
@@ -68,9 +67,6 @@
         set fileencoding=utf-8
         set fileencodings=utf-8,prc,latin1
         scriptencoding utf-8
-        " Reload menu to show Chinese characters properly
-        source $VIMRUNTIME/delmenu.vim
-        source $VIMRUNTIME/menu.vim        
         " Use Unix as the standard file type
         set fileformats=unix,dos,mac
         " Make a backup before overwriting a file
@@ -79,8 +75,6 @@
         if has('persistent_undo')
             set undofile
         endif
-        " Use * register for copy-paste
-        set clipboard=unnamed
         " Disable beep and flash
         set noerrorbells visualbell t_vb=
         " With a map leader it's possible to do extra key combinations
@@ -103,9 +97,9 @@
         set ruler
          " Always has a status line
         set laststatus=2
-        set statusline=[#%n]%(\ %{STLBtPt()}%)
-        set statusline+=%(\ %{STLRoMod()}%)
-        set statusline+=%(\ %{STLFencFf()}%)
+        set statusline=[#%n]%(\ %{STLSegment1()}%)
+        set statusline+=%(\ %{STLSegment2()}%)
+        set statusline+=%(\ %{STLSegment3()}%)
         if exists(':SyntasticCheck')
             set statusline+=%(\ %{SyntasticStatuslineFlag()}%)
         endif
@@ -154,39 +148,8 @@
         set formatoptions+=1
         " Don't show the preview window
         set completeopt-=preview
+        set t_co=256
 
-        " Set extra options when running in GUI mode
-        if has("gui_running")
-            " use console dialogs
-            set guioptions+=c
-            " don't auto-copy selection to * register
-            set guioptions-=a
-            " don't use gui tabs
-            set guioptions-=e
-            " don't show menubar
-            set guioptions-=m
-            " don't show toolbar
-            set guioptions-=T
-            " disable scrollbars
-            set guioptions-=r
-            set guioptions-=R
-            set guioptions-=l
-            set guioptions-=L
-            set t_co=256
-            if s:isWin
-                set guifont=Consolas:h12:cANSI
-                set guifontwide=Yahei_Mono:h11
-            elseif s:isMac
-                set guifont=Consolas:h16
-                set guifontwide=Heiti\ SC\ Light:h16
-            endif
-            " don't use ALT key to activate menu
-            set winaltkeys=no
-        endif
-        " activate option key in macvim
-        if has("gui_macvim")
-            set macmeta
-        end
     " }}}2
 
     " Formatting {{{2
@@ -328,11 +291,10 @@
 
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
-        let s:normalExts = 'lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz'
-        let s:winExts = 'exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\='
-        let NERDTreeIgnore=['\c\.\(' . s:normalExts . '\|' .
-                        \(s:isWin ? s:winExts : "") .
-                        \'\)$']
+        let s:normalExts = ''
+        let s:winExts = ''
+        let NERDTreeIgnore=['\c\.\(lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz\)$',
+                    \'\c\.\(exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\=\)$']
         let NERDTreeBookmarksFile = $HOME.'/.vimdb/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
@@ -343,12 +305,8 @@
         nnoremap <silent> <Leader>fr :<C-U>CtrlPMRU<CR>
         nnoremap <silent> <Leader>b :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
-                    \'dir' : '\c^\(' .
-                        \(s:isWin ? 'c:\\Windows\\\|c:\\Users\\[^\\]\+\\' : "") .
-                    \'\)',
-                    \'file' : '\c\.\(' . s:normalExts . '\|' .
-                        \(s:isWin ? s:winExts : "") .
-                        \'\)$'
+                    \'dir' : '\c^\(c:\\Windows\\\|c:\\Users\\[^\\]\+\\\)',
+                    \'file' : '\c\.\(lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz\|exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\=\)$'
                     \}
         let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
     " }}}2
@@ -377,7 +335,7 @@
 
     " Tagbar {{{2
         nnoremap <silent> <Leader>t :TagbarToggle<CR>
-        if s:isWin
+        if g:isWin
             let g:tagbar_ctags_bin = $HOME.'/bin/ctags.exe'
             let g:tagbar_type_javascript = { 'ctagsbin' : $HOME.'/bin/jsctags.bat' }
             let g:tagbar_systemenc = 'cp936'
@@ -857,11 +815,9 @@
                 echohl ErrorMsg | echo 'Please install pandoc first.' | echohl None
                 return
             endif
-            if s:isWin
+            if g:isWin
                 let BROWSER_COMMAND = 'cmd.exe /c start ""'
-            elseif s:isLinux
-                let BROWSER_COMMAND = 'xdg-open'
-            elseif s:isMac
+            elseif g:isMac
                 let BROWSER_COMMAND = 'open'
             endif
             let output_file = tempname() . '.html'
@@ -879,7 +835,7 @@
                 if str != "" && match(str, '^https\=:\/\/') == -1
                     let newLine = substitute(line, '\(!\[.*\]\)(' . str . ')',
                                 \'\1(file://' . escape(expand("%:p:h", 1), '\') . 
-                                \(s:isWin ? '\\\\' : '/') . 
+                                \(g:isWin ? '\\\\' : '/') . 
                                 \escape(expand(str, 1), '\') . ')', 'g')
                 else
                     let newLine = line
@@ -902,7 +858,7 @@
     " }}}2
 
     " Customize statusline {{{2
-        function! STLBtPt()
+        function! STLSegment1()
             if &l:buftype == 'nofile'
                 let l:str = '<Scratch>'
             elseif &l:buftype == 'quickfix'
@@ -919,7 +875,7 @@
             return exists('l:str') ? l:str : ''
         endfunction
 
-        function! STLRoMod()
+        function! STLSegment2()
             if &l:readonly
                 if &l:modified
                     let l:str = '[RO,+]'
@@ -934,7 +890,7 @@
             return exists('l:str') ? l:str : ''
         endfunction
 
-        function! STLFencFf()
+        function! STLSegment3()
             if &l:fileencoding != 'utf-8' && !empty(&l:fileencoding)
                 if &l:fileformat != 'unix'
                     let l:str = '[' . &l:fileencoding . ',' . &l:fileformat . ']'
@@ -949,41 +905,38 @@
             return exists('l:str') ? l:str : ''
         endfunction
 
-        function! s:GetOrigSTLInfo()
-            redir => message
+        function! s:GetOrigSTLColor()
+            redir => s:origSTLColor
             silent! execute 'highlight StatusLine'
             redir END
-            if match(message, 'gui=') != -1
-                let gui = substitute(message, '.*gui=\(.\{-}\) .*$', '\1', '')
-            else
-                let gui = 'Bold'
+            let s:origSTLColor = substitute(s:origSTLColor, '.*xxx\(.*\)$', '\1', '')
+        endfunction
+
+        function! s:RestoreOrigSTLColor()
+            if !exists('s:origSTLColor')
+                call s:GetOrigSTLColor()
             endif
-            if match(message, 'guifg=') != -1
-                let guifg = substitute(message, '.*guifg=\(.\{-}\) .*$', '\1', '')
-            else
-                let guifg = 'White'
-            endif
-            if match(message, 'guibg=') != -1
-                let guibg = substitute(message, '.*guibg=\(.*\)$', '\1', '')
-            else
-                let guibg = 'Blue'
-            endif
-            let s:origSTLInfo = {'gui': gui, 'guifg': guifg, 'guibg': guibg}
+            execute 'highlight StatusLine NONE'
+            execute 'highlight StatusLine' . s:origSTLColor
         endfunction
 
         function! s:SetSTLColor(mode)
-            call s:GetOrigSTLInfo()
+            if !exists('s:origSTLColor')
+                call s:GetOrigSTLColor()
+            endif
             if a:mode ==# 'i'
-                execute 'highlight StatusLine gui=Bold guifg=White guibg=Purple'
+                execute 'highlight StatusLine NONE'
+                execute 'highlight StatusLine gui=Bold guifg=White guibg=Purple term=bold ctermfg=255 ctermbg=90'
             elseif a:mode =~# '\(r\|v\)'
-                execute 'highlight StatusLine gui=Bold guifg=White guibg=Orange'
+                execute 'highlight StatusLine NONE'
+                execute 'highlight StatusLine gui=Bold guifg=White guibg=Orange term=bold ctermfg=255 ctermbg=208'
             else
-                execute 'highlight StatusLine gui=' . s:origSTLInfo['gui'] . ' guifg=' . s:origSTLInfo['guifg'] . ' guibg=' . s:origSTLInfo['guibg']
+                call s:RestoreOrigSTLColor()
             endif
         endfunction
 
         autocmd InsertEnter * call s:SetSTLColor(v:insertmode)
-        autocmd InsertLeave * execute 'highlight StatusLine gui=' . s:origSTLInfo['gui'] . ' guifg=' . s:origSTLInfo['guifg'] . ' guibg=' . s:origSTLInfo['guibg']
+        autocmd InsertLeave * call s:RestoreOrigSTLColor()
     "}}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
