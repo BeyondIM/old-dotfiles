@@ -22,6 +22,10 @@
 
     " Runtimepath render {{{2
         runtime bundle/vim-pathogen/autoload/pathogen.vim
+        let g:pathogen_disabled = []
+        if !has('gui_running')
+            call add(g:pathogen_disabled, 'vim-util')
+        endif
         execute pathogen#infect()
 
         set runtimepath+=$HOME/.vim/scripts/scriptbundle/
@@ -35,10 +39,6 @@
         Script '2666'
         " matchit
         Script '39'
-        " align
-        Script '294'
-        " wombat colorscheme
-        Script '1778', {'subdir':'colors'}
         " mayansmoke colorscheme
         Script '3065', {'subdir':'colors'}
     " }}}2
@@ -146,9 +146,12 @@
         set formatoptions+=l
         " Don't break lines after one-letter words, if possible
         set formatoptions+=1
+        " Don't continue comments when pushing o/O
+        set formatoptions-=o
         " Don't show the preview window
         set completeopt-=preview
         set t_co=256
+        colorscheme molokai
 
     " }}}2
 
@@ -215,13 +218,10 @@
         vnoremap < <gv
         vnoremap > >gv
         " Easier movement between windows
-        nnoremap <M-h> <C-W>h<C-W>_
-        nnoremap <M-j> <C-W>j<C-W>_
-        nnoremap <M-k> <C-W>k<C-W>_
-        nnoremap <M-l> <C-W>l<C-W>_
-        " Other windows keymapping
-        nnoremap <M-o> <C-W>o
-        nnoremap <M-q> <C-W>q
+        nnoremap <LocalLeader>h <C-W>h<C-W>_
+        nnoremap <LocalLeader>j <C-W>j<C-W>_
+        nnoremap <LocalLeader>k <C-W>k<C-W>_
+        nnoremap <LocalLeader>l <C-W>l<C-W>_
 
         " Keep search matches in the middle of the window.
         nnoremap n nzzzv
@@ -232,11 +232,6 @@
 
         " Toggle search highlighting
         nnoremap <silent> <LocalLeader>/ :set hlsearch! hlsearch?<CR>
-
-        " Toggle menubar
-        nnoremap <silent> <LocalLeader>mb :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>
-                    \else<BAR>set guioptions+=m<BAR>
-                    \endif<CR>
 
         " Invert 'foldenable'
         nnoremap <LocalLeader>= :set foldenable! foldenable?<CR>
@@ -254,15 +249,15 @@
         nnoremap <LocalLeader>9 :set foldlevel=9<CR>
 
         " Toggle wrap lines
-        nnoremap <silent> <C-F2> :set wrap! wrap?<CR>
+        nnoremap <silent> <F2> :set wrap! wrap?<CR>
 
         " Toggle listchars
-        nnoremap <silent> <C-F3> :set list! list?<CR>
-        imap <C-F3> <C-O><C-F3>
-        xmap <C-F3> <Esc><C-F3>gv
+        nnoremap <silent> <F3> :set list! list?<CR>
+        imap <F3> <C-O><F3>
+        xmap <F3> <Esc><F3>gv
 
         " Toggle ignore whitespace when diff
-        nnoremap <LocalLeader>iw :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>
+        nnoremap <LocalLeader>td :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>
                     \else<BAR>set diffopt+=iwhite<BAR>
                     \endif<BAR>
                     \set diffopt?<CR>
@@ -282,6 +277,15 @@
 
         " Substitute visual selection
         xnoremap & "*y<Esc>:<c-u>%s/<c-r>=substitute(escape(@*, '\/.*$^~['), "\n", '\\n', "g")<CR>//gc<LEFT><LEFT><LEFT>
+
+        " Mapping arrow keys when running tmux
+        if &term =~ '^screen' && exists('$TMUX')
+            " tmux will send xterm-style keys when xterm-keys is on
+            execute "set <xUp>=\e[1;*A"
+            execute "set <xDown>=\e[1;*B"
+            execute "set <xRight>=\e[1;*C"
+            execute "set <xLeft>=\e[1;*D"
+        endif
     " }}}2
 
 " }}}1
@@ -302,19 +306,13 @@
 
     " CtrlP {{{2
         nnoremap <silent> <Leader>ff :<C-U>CtrlP<CR>
-        nnoremap <silent> <Leader>fr :<C-U>CtrlPMRU<CR>
+        nnoremap <silent> <Leader>fm :<C-U>CtrlPMRU<CR>
         nnoremap <silent> <Leader>b :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
                     \'dir' : '\c^\(c:\\Windows\\\|c:\\Users\\[^\\]\+\\\)',
                     \'file' : '\c\.\(lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz\|exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\=\)$'
                     \}
         let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
-    " }}}2
-
-    " Ack {{{2
-        if executable('ag')
-            let g:ackprg = 'ag --nogroup --nocolor --column'
-        endif
     " }}}2
 
     " YankRing {{{2
@@ -394,11 +392,11 @@
         inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
         inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
 
-        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#expand_impl() :
+        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#mappings#expand_impl() :
                     \ pumvisible() ? neocomplete#close_popup() : "\<CR>"
 
-        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
-        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#jump_impl() : "\<ESC>"
+        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#mappings#jump_impl() : "\<ESC>"
+        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#mappings#jump_impl() : "\<ESC>"
 
         " Enable omni completion
         autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
@@ -458,11 +456,6 @@
         let g:rubycomplete_buffer_loading = 1
         let g:rubycomplete_include_object = 1
         let g:rubycomplete_include_objectspace = 1
-    " }}}2
-
-    " Vim-util {{{2
-        let g:darkColors = ['jellybeans', 'molokai', 'wombat']
-        let g:lightColors = ['mayansmoke']
     " }}}2
 
 " }}}1
@@ -785,26 +778,26 @@
         endfunction
 
         " normal mode
-        nnoremap <silent> <Left> <<
-        nnoremap <silent> <Right> >>
-        nnoremap <silent> <Up> <Esc>:call <SID>AddEmptyLine('-')<CR>
-        nnoremap <silent> <Down>  <Esc>:call <SID>AddEmptyLine('+')<CR>
+        nnoremap <silent> <S-Left> <<
+        nnoremap <silent> <S-Right> >>
+        nnoremap <silent> <S-Up> <Esc>:call <SID>AddEmptyLine('-')<CR>
+        nnoremap <silent> <S-Down>  <Esc>:call <SID>AddEmptyLine('+')<CR>
         nnoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>
         nnoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>
 
         " visual mode
-        vnoremap <silent> <Left> <gv
-        vnoremap <silent> <Right> >gv
-        vnoremap <silent> <Up> <Esc>:call <SID>AddEmptyLine('-')<CR>gv
-        vnoremap <silent> <Down>  <Esc>:call <SID>AddEmptyLine('+')<CR>gv
+        vnoremap <silent> <S-Left> <gv
+        vnoremap <silent> <S-Right> >gv
+        vnoremap <silent> <S-Up> <Esc>:call <SID>AddEmptyLine('-')<CR>gv
+        vnoremap <silent> <S-Down>  <Esc>:call <SID>AddEmptyLine('+')<CR>gv
         vnoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>gv
         vnoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>gv
 
         " insert mode
-        inoremap <silent> <Left> <C-D>
-        inoremap <silent> <Right> <C-T>
-        inoremap <silent> <Up> <Esc>:call <SID>AddEmptyLine('-')<CR>a
-        inoremap <silent> <Down> <Esc>:call <SID>AddEmptyLine('+')<CR>a
+        inoremap <silent> <S-Left> <C-D>
+        inoremap <silent> <S-Right> <C-T>
+        inoremap <silent> <S-Up> <Esc>:call <SID>AddEmptyLine('-')<CR>a
+        inoremap <silent> <S-Down> <Esc>:call <SID>AddEmptyLine('+')<CR>a
         inoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>a
         inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
     " }}}2
@@ -910,19 +903,22 @@
             silent! execute 'highlight StatusLine'
             redir END
             let s:origSTLColor = substitute(s:origSTLColor, '.*xxx\(.*\)$', '\1', '')
+            let s:origSTLColor = substitute(s:origSTLColor, '\n', ' ', 'g')
+            let s:origSTLColor = substitute(s:origSTLColor,'\s\+', ' ', 'g')
         endfunction
 
         function! s:RestoreOrigSTLColor()
             if !exists('s:origSTLColor')
-                call s:GetOrigSTLColor()
+                finish
             endif
             execute 'highlight StatusLine NONE'
             execute 'highlight StatusLine' . s:origSTLColor
         endfunction
 
         function! s:SetSTLColor(mode)
-            if !exists('s:origSTLColor')
+            if !exists('s:origSTLColor') || s:curColorsName != g:colors_name
                 call s:GetOrigSTLColor()
+                let s:curColorsName = exists('g:colors_name') ? g:colors_name : 'noColorsName'
             endif
             if a:mode ==# 'i'
                 execute 'highlight StatusLine NONE'

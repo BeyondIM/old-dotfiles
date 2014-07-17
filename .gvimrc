@@ -26,12 +26,22 @@ if g:isWin
     " Reload menu to show Chinese characters properly
     source $VIMRUNTIME/delmenu.vim
     source $VIMRUNTIME/menu.vim        
+    " Toggle menubar
+    nnoremap <silent> <LocalLeader>tm :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>
+                \else<BAR>set guioptions+=m<BAR>
+                \endif<CR>
 endif
 if g:isMac
     set guifont=Consolas:h16
     set guifontwide=Heiti\ SC\ Light:h16
-    " activate option key in macvim
-    set macmeta
+    if has('gui_macvim')
+        " activate option key in macvim
+        set macmeta
+    endif
 endif
+
+" Plugin: Vim-util
+let g:darkColors = ['jellybeans', 'molokai', 'mustang']
+let g:lightColors = ['mayansmoke']
 
 " vim: set shiftwidth=4 tabstop=4 softtabstop=4 expandtab foldmethod=marker:
