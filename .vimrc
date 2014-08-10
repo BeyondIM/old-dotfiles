@@ -10,8 +10,6 @@
         " Check system
         let g:isWin = has('win32') || has('win64')
         let g:isMac = has('mac') || has('macunix')
-        " Remove all autocommands to avoid sourcing them twice
-        autocmd!
     " }}}2
 
     " Windows Compatible {{{2
@@ -22,10 +20,6 @@
 
     " Runtimepath render {{{2
         runtime bundle/vim-pathogen/autoload/pathogen.vim
-        let g:pathogen_disabled = []
-        if !has('gui_running')
-            call add(g:pathogen_disabled, 'vim-util')
-        endif
         execute pathogen#infect()
 
         set runtimepath+=$HOME/.vim/scripts/scriptbundle/
@@ -37,6 +31,8 @@
         Script '1234'
         " mark
         Script '2666'
+        " Align
+        Script '294'
         " matchit
         Script '39'
         " mayansmoke colorscheme
@@ -97,15 +93,6 @@
         set ruler
          " Always has a status line
         set laststatus=2
-        set statusline=[#%n]%(\ %{STLSegment1()}%)
-        set statusline+=%(\ %{STLSegment2()}%)
-        set statusline+=%(\ %{STLSegment3()}%)
-        if exists(':SyntasticCheck')
-            set statusline+=%(\ %{SyntasticStatuslineFlag()}%)
-        endif
-        set statusline+=%=
-        set statusline+=%(%y\ %)
-        set statusline+=L:\ %l/%L[%p%%]\ C:\ %c
         " Configure backspace so it acts as it should act
         set backspace=eol,start,indent
         set whichwrap+=<,>,h,l
@@ -146,8 +133,6 @@
         set formatoptions+=l
         " Don't break lines after one-letter words, if possible
         set formatoptions+=1
-        " Don't continue comments when pushing o/O
-        set formatoptions-=o
         " Don't show the preview window
         set completeopt-=preview
         set t_co=256
@@ -182,15 +167,21 @@
 " Commands, key mapping {{{1
 
     " Commands {{{2
-        " Highlight current line and cursor when in insert mode
-        autocmd InsertLeave * set nocursorline
-        autocmd InsertEnter * set cursorline
+        augroup normalAutocmd
+            autocmd!
+            " Return to last edit position when opening files
+            autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | execute "normal! g`\"" | endif
 
-        " Fast source $MYVIMRC
-        autocmd BufWritePost .vimrc nested source $MYVIMRC
+            " Highlight current line and cursor when in insert mode
+            autocmd InsertLeave * set nocursorline
+            autocmd InsertEnter * set cursorline
 
-        " Return to last edit position when opening files
-        autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | execute "normal! g`\"" | endif
+            " Resize splits when the window is resized
+            autocmd VimResized * execute "normal! \<c-w>="
+
+            " Fast source $MYVIMRC
+            autocmd BufWritePost .vimrc nested source $MYVIMRC
+        augroup END
 
         " OmniComplete
         autocmd filetype * if exists('+omnifunc') && empty(&omnifunc) |
@@ -199,9 +190,6 @@
 
         " Customize indent style
         autocmd FileType html,xhtml,css,javascript,ruby,eruby setlocal tabstop=2 shiftwidth=2 softtabstop=2
-
-        " Resize splits when the window is resized
-        autocmd VimResized * execute "normal! \<c-w>="
 
         " Diff orig file
         if !exists(":DiffOrig")
@@ -295,8 +283,6 @@
 
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
-        let s:normalExts = ''
-        let s:winExts = ''
         let NERDTreeIgnore=['\c\.\(lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz\)$',
                     \'\c\.\(exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\=\)$']
         let NERDTreeBookmarksFile = $HOME.'/.vimdb/.NERDTreeBookmarks'
@@ -422,7 +408,7 @@
     " }}}2
 
     " Syntastic {{{2
-        let g:syntastic_stl_format = '[L:%F, %E{Err:%e}%B{ }%W{Warn:%w}]'
+        let g:syntastic_stl_format = 'L:%F, %E{Err:%e}%B{ }%W{Warn:%w}'
         let g:syntastic_javascript_checkers=['jslint']
         let g:syntastic_ruby_checkers=['mri', 'rubocop']
     " }}}2
@@ -456,6 +442,11 @@
         let g:rubycomplete_buffer_loading = 1
         let g:rubycomplete_include_object = 1
         let g:rubycomplete_include_objectspace = 1
+    " }}}2
+
+    " Vim-util {{{2
+        let g:darkColors = ['jellybeans', 'molokai', 'mustang']
+        let g:lightColors = ['mayansmoke']
     " }}}2
 
 " }}}1
@@ -503,8 +494,11 @@
             silent! execute "set foldcolumn=0"
         endfunction
 
-        autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
-        autocmd CursorHold * call UpdateFoldcolumn()
+        augroup showFoldcolumn
+            autocmd!
+            autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
+            autocmd CursorHold * call UpdateFoldcolumn()
+        augroup END
     " }}}2
 
     " Toggle fold state between closed and opened {{{2
@@ -546,7 +540,10 @@
             endif
         endfunction
 
-        autocmd InsertEnter * call OpenFoldWhenInserting(10)
+        augroup openFoldWhenInserting
+            autocmd!
+            autocmd InsertEnter * call OpenFoldWhenInserting(10)
+        augroup END
     " }}}2
 
     " Customize foldtext {{{2
@@ -849,91 +846,6 @@
 
         nnoremap <silent> <LocalLeader>p :call <SID>PreviewMarkdown()<CR>
     " }}}2
-
-    " Customize statusline {{{2
-        function! STLSegment1()
-            if &l:buftype == 'nofile'
-                let l:str = '<Scratch>'
-            elseif &l:buftype == 'quickfix'
-                let l:str = '<quickfix>'
-            elseif &l:buftype == 'help'
-                let l:str = '<help>'
-            elseif empty(&l:buftype)
-                if expand("%:p:h", 1) == getcwd()
-                    let l:str = expand("%:p", 1)
-                else
-                    let l:str = '<' . getcwd() . '> ' . expand("%:p:t", 1)
-                endif
-            endif
-            return exists('l:str') ? l:str : ''
-        endfunction
-
-        function! STLSegment2()
-            if &l:readonly
-                if &l:modified
-                    let l:str = '[RO,+]'
-                else
-                    let l:str = '[RO]'
-                endif
-            else
-                if &l:modified
-                    let l:str = '[+]'
-                endif
-            endif
-            return exists('l:str') ? l:str : ''
-        endfunction
-
-        function! STLSegment3()
-            if &l:fileencoding != 'utf-8' && !empty(&l:fileencoding)
-                if &l:fileformat != 'unix'
-                    let l:str = '[' . &l:fileencoding . ',' . &l:fileformat . ']'
-                else
-                    let l:str = '[' . &l:fileencoding . ']'
-                endif
-            else
-                if &l:fileformat != 'unix'
-                    let l:str = '[' . &l:fileformat . ']'
-                endif
-            endif
-            return exists('l:str') ? l:str : ''
-        endfunction
-
-        function! s:GetOrigSTLColor()
-            redir => s:origSTLColor
-            silent! execute 'highlight StatusLine'
-            redir END
-            let s:origSTLColor = substitute(s:origSTLColor, '.*xxx\(.*\)$', '\1', '')
-            let s:origSTLColor = substitute(s:origSTLColor, '\n', ' ', 'g')
-            let s:origSTLColor = substitute(s:origSTLColor,'\s\+', ' ', 'g')
-        endfunction
-
-        function! s:RestoreOrigSTLColor()
-            if !exists('s:origSTLColor')
-                finish
-            endif
-            execute 'highlight StatusLine NONE'
-            execute 'highlight StatusLine' . s:origSTLColor
-        endfunction
-
-        function! s:SetSTLColor(mode)
-            if !exists('s:origSTLColor') || s:curColorsName != g:colors_name
-                call s:GetOrigSTLColor()
-                let s:curColorsName = exists('g:colors_name') ? g:colors_name : 'noColorsName'
-            endif
-            if a:mode ==# 'i'
-                execute 'highlight StatusLine NONE'
-                execute 'highlight StatusLine gui=Bold guifg=White guibg=Purple term=bold ctermfg=255 ctermbg=90'
-            elseif a:mode =~# '\(r\|v\)'
-                execute 'highlight StatusLine NONE'
-                execute 'highlight StatusLine gui=Bold guifg=White guibg=Orange term=bold ctermfg=255 ctermbg=208'
-            else
-                call s:RestoreOrigSTLColor()
-            endif
-        endfunction
-
-        autocmd InsertEnter * call s:SetSTLColor(v:insertmode)
-        autocmd InsertLeave * call s:RestoreOrigSTLColor()
-    "}}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
         function! s:InitializeDirectories()

@@ -40,8 +40,4 @@ if g:isMac
     endif
 endif
 
-" Plugin: Vim-util
-let g:darkColors = ['jellybeans', 'molokai', 'mustang']
-let g:lightColors = ['mayansmoke']
-
 " vim: set shiftwidth=4 tabstop=4 softtabstop=4 expandtab foldmethod=marker:
