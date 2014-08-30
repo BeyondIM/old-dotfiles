@@ -21,15 +21,6 @@ set guioptions-=L
 if g:isWin
     set guifont=Consolas:h12:cANSI
     set guifontwide=Yahei_Mono:h11
-    " don't use ALT key to activate menu
-    set winaltkeys=no
-    " Reload menu to show Chinese characters properly
-    source $VIMRUNTIME/delmenu.vim
-    source $VIMRUNTIME/menu.vim        
-    " Toggle menubar
-    nnoremap <silent> <LocalLeader>tm :<C-U>if &guioptions=~#'m'<BAR>set guioptions-=m<BAR>
-                \else<BAR>set guioptions+=m<BAR>
-                \endif<CR>
 endif
 if g:isMac
     set guifont=Consolas:h16

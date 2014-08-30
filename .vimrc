@@ -73,8 +73,9 @@
         endif
         " Disable beep and flash
         set noerrorbells visualbell t_vb=
+        " Fix slow O inserts
+        set timeout timeoutlen=1000 ttimeoutlen=100
         " With a map leader it's possible to do extra key combinations
-        let g:maplocalleader="\\"
         let g:mapleader=","
         let mapleader=","
     " }}}2
@@ -115,8 +116,6 @@
         set switchbuf=useopen
         " Allow virtual editing in Visual block mode
         set virtualedit+=block
-        " Abbrev. of messages (avoids 'hit enter')
-        set shortmess+=filmnrxoOtT
         " Don't show mode
         set noshowmode
         " Pause listings when the screen is full
@@ -125,6 +124,8 @@
         set confirm
         " Ignore changes in amount of white space
         set diffopt-=iwhite
+        " Only insert one space after a '.', '?' and '!' with join command
+        set nojoinspaces
         " Recognize numbered lists when autoindenting
         set formatoptions+=n
         " Use second line of paragraph when autoindenting
@@ -180,7 +181,7 @@
             autocmd VimResized * execute "normal! \<c-w>="
 
             " Fast source $MYVIMRC
-            autocmd BufWritePost .vimrc nested source $MYVIMRC
+            autocmd BufWritePost .vimrc source $MYVIMRC
         augroup END
 
         " OmniComplete
@@ -206,10 +207,10 @@
         vnoremap < <gv
         vnoremap > >gv
         " Easier movement between windows
-        nnoremap <LocalLeader>h <C-W>h<C-W>_
-        nnoremap <LocalLeader>j <C-W>j<C-W>_
-        nnoremap <LocalLeader>k <C-W>k<C-W>_
-        nnoremap <LocalLeader>l <C-W>l<C-W>_
+        nnoremap <C-h> <C-W>h<C-W>_
+        nnoremap <C-j> <C-W>j<C-W>_
+        nnoremap <C-k> <C-W>k<C-W>_
+        nnoremap <C-l> <C-W>l<C-W>_
 
         " Keep search matches in the middle of the window.
         nnoremap n nzzzv
@@ -219,22 +220,10 @@
         nnoremap <Leader>w :<C-U>w!<CR>
 
         " Toggle search highlighting
-        nnoremap <silent> <LocalLeader>/ :set hlsearch! hlsearch?<CR>
+        nnoremap <silent> <Leader>/ :set hlsearch! hlsearch?<CR>
 
         " Invert 'foldenable'
-        nnoremap <LocalLeader>= :set foldenable! foldenable?<CR>
-
-        " Quickly set foldlevel
-        nnoremap <LocalLeader>0 :set foldlevel=0<CR>
-        nnoremap <LocalLeader>1 :set foldlevel=1<CR>
-        nnoremap <LocalLeader>2 :set foldlevel=2<CR>
-        nnoremap <LocalLeader>3 :set foldlevel=3<CR>
-        nnoremap <LocalLeader>4 :set foldlevel=4<CR>
-        nnoremap <LocalLeader>5 :set foldlevel=5<CR>
-        nnoremap <LocalLeader>6 :set foldlevel=6<CR>
-        nnoremap <LocalLeader>7 :set foldlevel=7<CR>
-        nnoremap <LocalLeader>8 :set foldlevel=8<CR>
-        nnoremap <LocalLeader>9 :set foldlevel=9<CR>
+        nnoremap <Leader>= :set foldenable! foldenable?<CR>
 
         " Toggle wrap lines
         nnoremap <silent> <F2> :set wrap! wrap?<CR>
@@ -243,12 +232,6 @@
         nnoremap <silent> <F3> :set list! list?<CR>
         imap <F3> <C-O><F3>
         xmap <F3> <Esc><F3>gv
-
-        " Toggle ignore whitespace when diff
-        nnoremap <LocalLeader>td :<C-U>if &diffopt=~#'iwhite'<BAR>set diffopt-=iwhite<BAR>
-                    \else<BAR>set diffopt+=iwhite<BAR>
-                    \endif<BAR>
-                    \set diffopt?<CR>
 
         " Don't jump when using * for search
         nnoremap * *<c-o>
@@ -283,8 +266,9 @@
 
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
-        let NERDTreeIgnore=['\c\.\(lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz\)$',
-                    \'\c\.\(exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\=\)$']
+        let s:extensionName = ['lib', 'so', 'obj', 'pdf', 'jpeg', 'jpg', 'png', 'gif', 'zip', 'rar', '7z', 'z', 'bz2', 'tar', 'gz', 'tgz', 
+                    \'exe', 'com', 'dll', 'ocx', 'drv', 'sys', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt']
+        let NERDTreeIgnore=['\c\.\(' . join(s:extensionName, '\|') . '\)$']
         let NERDTreeBookmarksFile = $HOME.'/.vimdb/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
@@ -296,7 +280,7 @@
         nnoremap <silent> <Leader>b :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
                     \'dir' : '\c^\(c:\\Windows\\\|c:\\Users\\[^\\]\+\\\)',
-                    \'file' : '\c\.\(lib\|so\|obj\|pdf\|jpe\=g\|png\|gif\|zip\|rar\|7z\|z\|bz2\|tar\|gz\|tgz\|exe\|com\|dll\|ocx\|drv\|sys\|docx\=\|xlsx\=\|pptx\=\)$'
+                    \'file' : '\c\.\(' . join(s:extensionName, '\|') . '\)$'
                     \}
         let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
     " }}}2
@@ -353,60 +337,6 @@
                     \ }
     " }}}2
 
-    " Neocomplete {{{2
-        let g:neocomplete#enable_at_startup = 1
-        let g:neocomplete#enable_smart_case = 1
-        let g:neocomplete#use_vimproc = 1
-        let g:neocomplete#sources#syntax#min_keyword_length = 3
-        let g:neocomplete#data_directory = $HOME.'/.vimdb/.neocomplete'
-        let s:ignoredBufs = '^\[.\+\]\|__.\+__\|NERD_tree_\|ControlP'
-        let g:neocomplete#lock_buffer_name_pattern = s:ignoredBufs
-        let g:neocomplete#force_overwrite_completefunc = 1
-
-        " Define keyword, for minor languages
-        if !exists('g:neocomplete_keyword_patterns')
-            let g:neocomplete_keyword_patterns = {}
-        endif
-        let g:neocomplete_keyword_patterns['default'] = '\h\w*'        
-
-        " key mappings
-        inoremap <expr><C-g> neocomplete#undo_completion()
-        inoremap <expr><C-l> neocomplete#complete_common_string()
-        inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
-        inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-
-        inoremap <expr><TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-        inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
-
-        inoremap <silent><expr><CR> neosnippet#expandable() ? neosnippet#mappings#expand_impl() :
-                    \ pumvisible() ? neocomplete#close_popup() : "\<CR>"
-
-        inoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#mappings#jump_impl() : "\<ESC>"
-        snoremap <silent><expr><C-j> neosnippet#jumpable() ? neosnippet#mappings#jump_impl() : "\<ESC>"
-
-        " Enable omni completion
-        autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-        autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-        autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-
-        if !exists('g:neocomplete#force_omni_input_patterns')
-            let g:neocomplete#force_omni_input_patterns = {}
-        endif
-        let g:neocomplete#force_omni_input_patterns.ruby = '[^. *\t]\.\w*\|\h\w*::'
-
-        " Disable neosnippet-snippets
-        let g:neosnippet#disable_runtime_snippets = {'_' : 1}
-
-        " For snippet_complete marker
-        if has('conceal')
-            set conceallevel=2 concealcursor=i
-        endif
-
-        "Use snipmate snippets
-        let g:neosnippet#snippets_directory=$HOME.'/.vim/bundle/vim-snippets/snippets'
-        let g:neosnippet#enable_snipmate_compatibility = 1
-    " }}}2
-
     " Syntastic {{{2
         let g:syntastic_stl_format = 'L:%F, %E{Err:%e}%B{ }%W{Warn:%w}'
         let g:syntastic_javascript_checkers=['jslint']
@@ -444,8 +374,18 @@
         let g:rubycomplete_include_objectspace = 1
     " }}}2
 
+    " Supertab {{{2
+        let g:SuperTabDefaultCompletionType = "context"
+    " }}}2
+
+    " Ultisnips {{{2
+        let g:UltiSnipsExpandTrigger="<c-j>"
+        let g:UltiSnipsJumpForwardTrigger="<c-j>"
+        let g:UltiSnipsJumpBackwardTrigger="<c-k>"
+    " }}}2
+
     " Vim-util {{{2
-        let g:darkColors = ['jellybeans', 'molokai', 'mustang']
+        let g:darkColors = ['jellybeans', 'molokai']
         let g:lightColors = ['mayansmoke']
     " }}}2
 
@@ -467,40 +407,6 @@
         autocmd filetype javascript,ruby autocmd BufWritePre <buffer> call StripTrailingWhitespace()
     " }}}2
 
-    " Show foldcolumn when folding exists {{{2
-        function! UpdateFoldcolumn(...)
-            let defaultInterval = 5
-            let interval = a:0 > 0 ? a:1 : defaultInterval
-            let foldcolumnWidth = a:0 > 1 ? a:2 : ''
-            if !exists('b:savedTime')
-                let b:savedTime = localtime()
-            elseif localtime() - b:savedTime >= interval
-                silent! execute 'call SetFoldcolumn(' . foldcolumnWidth . ')'
-                let b:savedTime = localtime()
-            endif
-        endfunction
-
-        function! SetFoldcolumn(...)
-            let defaultWidth = 3
-            let width = a:0 > 0 ? a:1 : defaultWidth
-            let lineNum=1
-            while lineNum <= line("$")
-                if foldlevel(lineNum)
-                    silent! execute "set foldcolumn=" . width
-                    return
-                endif
-                let lineNum = lineNum + 1
-            endwhile
-            silent! execute "set foldcolumn=0"
-        endfunction
-
-        augroup showFoldcolumn
-            autocmd!
-            autocmd BufWinEnter,BufLeave * call SetFoldcolumn()
-            autocmd CursorHold * call UpdateFoldcolumn()
-        augroup END
-    " }}}2
-
     " Toggle fold state between closed and opened {{{2
         function! ToggleFold()
             if !foldlevel('.')
@@ -516,34 +422,6 @@
         endfun
 
         nnoremap <space> :<C-U>call ToggleFold()<CR>
-    " }}}2
-
-    " Auto open folding in predefined range around cursor when inserting {{{2
-        function! OpenFoldWhenInserting(range)
-            let l:range = a:range+0
-            let l:line = line('.')
-            let l:oldWinline = winline()
-            silent! execute (l:line-l:range).','.(l:line+l:range).'foldopen!'
-            let l:newWinline = winline()
-            let l:scrollNum = l:newWinline-l:oldWinline
-            if l:scrollNum < 0
-                while l:scrollNum < 0
-                    call feedkeys("\<C-x>\<C-y>")
-                    let l:scrollNum+=1
-                endwhile
-            endif
-            if l:line > &scrolloff && l:scrollNum > 0
-                while l:scrollNum > 0
-                    call feedkeys("\<C-x>\<C-e>")
-                    let l:scrollNum-=1
-                endwhile
-            endif
-        endfunction
-
-        augroup openFoldWhenInserting
-            autocmd!
-            autocmd InsertEnter * call OpenFoldWhenInserting(10)
-        augroup END
     " }}}2
 
     " Customize foldtext {{{2
@@ -626,105 +504,8 @@
         endfunction
 
         " Set foldtext
-        autocmd filetype vim setlocal foldtext=CustomFoldtext()
+        autocmd filetype vim,javascript,css setlocal foldtext=CustomFoldtext()
 
-        " Quickly set foldmethod
-        nnoremap <silent> <LocalLeader>fc :<C-U>setlocal foldmethod=marker foldmarker={,} foldtext=CustomFoldtext()<CR>
-        nnoremap <silent> <LocalLeader>fv :<C-U>setlocal foldmethod=marker foldmarker=/\*,\*/ foldtext=CustomFoldtext()<CR>
-    " }}}2
-
-    " Delete buffer while keeping window layout {{{2
-        function! s:CloseCurrentBuffer(bang, buffer)
-            if empty(a:buffer)
-                let bTarget = bufnr('%')
-            elseif a:buffer =~ '^\d\+$'
-                " When a:buffer doesn't exist as number, try as string
-                let bTarget = bufnr(a:buffer+0)>0 ? bufnr(a:buffer+0) : bufnr(a:buffer)
-            else
-                let bTarget = bufnr(a:buffer)
-            endif
-            if bTarget < 0
-                echohl ErrorMsg
-                echo 'No matching buffer for ' . a:buffer
-                echohl None
-                return
-            endif
-            if empty(a:bang) && getbufvar(bTarget, '&modified')
-                echohl WarningMsg
-                echo 'No write since last change for buffer ' . bTarget . ' (use :DeleteBuffer!)'
-                echohl None
-                return
-            endif
-            let wCurrent = winnr()
-            let wNums = filter(range(1, winnr('$')), "winbufnr(v:val) == " . bTarget)
-            if len(wNums) > 0
-                for w in wNums
-                    " Check if exists buflisted alternative buffer
-                    let bAlternative = -1
-                    " Check if exists buflisted non-alternative buffer
-                    let bBuflistedMatch = -1
-                    " Check if exists nobuflisted unnamed buffer
-                    let bNobuflistedMatch = -1
-                    execute w . 'wincmd w'
-                    for bufNum in range(1, bufnr('$'))
-                        if buflisted(bufNum) && bufnr(bufNum) != bTarget
-                            if bufnr(bufNum) == bufnr('#')
-                                let bAlternative = bufnr(bufNum)
-                            else
-                                let bBuflistedMatch = bufnr(bufNum)
-                            endif
-                        endif
-                        if bufloaded(bufNum) && !buflisted(bufNum) && !strlen(bufname(bufNum)) && bufnr(bufNum) != bTarget
-                            let bNobuflistedMatch = bufnr(bufNum)
-                        endif
-                    endfor
-                    if bAlternative > 0
-                        execute 'buffer ' . bAlternative
-                        continue
-                    endif
-                    if bBuflistedMatch > 0
-                        execute 'buffer ' . bBuflistedMatch
-                        continue
-                    endif
-                    if bNobuflistedMatch > 0
-                        execute 'buffer ' . bNobuflistedMatch
-                    else
-                        execute 'enew' . a:bang
-                    endif
-                    setlocal buflisted
-                    " Delete the unnamed buffer when switch to other one
-                    setlocal bufhidden=delete
-                endfor
-            endif
-            silent! execute 'bdelete' . a:bang . ' ' . bTarget
-            execute wCurrent . 'wincmd w'
-        endfunction
-
-        function! s:CloseAllHiddenBuffers()
-            let total = 0
-            let wCurrent = winnr()
-            for w in range(1, winnr('$'))
-                execute w . 'wincmd w'
-                for bufNum in range(1, bufnr('$'))
-                    if bufloaded(bufNum) && !buflisted(bufNum) && match(bufname(bufNum), s:ignoredBufs) == -1
-                        execute 'bwipeout! ' . bufNum
-                        let total = total + 1
-                    endif
-                endfor
-            endfor
-            execute wCurrent . 'wincmd w'
-            if total > 0
-                echo total . ' hidden buffers deleted.'
-            else
-                echo 'No hidden buffers exist.'
-            endif
-        endfunction
-
-        command! -bang -complete=buffer -nargs=? CloseCurrentBuffer call s:CloseCurrentBuffer('<bang>', '<args>')
-        nnoremap <silent> <LocalLeader>cc :CloseCurrentBuffer<CR>
-
-        command! -bang CloseAllHiddenBuffers call s:CloseAllHiddenBuffers()
-        nnoremap <silent> <LocalLeader>ca :CloseAllHiddenBuffers<CR>
     " }}}2
 
     " Remaps arrow keys to indent/unindent and add/remove blank lines {{{2
@@ -844,7 +625,35 @@
             call delete(output_file)
         endfunction
 
-        nnoremap <silent> <LocalLeader>p :call <SID>PreviewMarkdown()<CR>
+        nnoremap <silent> <Leader>p :call <SID>PreviewMarkdown()<CR>
+    " }}}2
+
+    " Rename current file {{{2
+        function! s:RenameFile()
+            let old_name = expand('%')
+            let new_name = input('New file name: ', expand('%'), 'file')
+            if new_name != '' && new_name != old_name
+                execute ':saveas ' . new_name
+                execute ':silent !rm ' . old_name
+                redraw!
+            endif
+        endfunction
+        nnoremap <leader>r :call <SID>RenameFile()<cr>
+    " }}}2
+
+    " Remove fancy characters {{{2
+        function! s:RemoveFancyCharacters()
+            let typo = {}
+            let typo["“"] = '"'
+            let typo["”"] = '"'
+            let typo["‘"] = "'"
+            let typo["’"] = "'"
+            let typo["–"] = '--'
+            let typo["—"] = '---'
+            let typo["…"] = '...'
+            execute ":%s/".join(keys(typo), '\|').'/\=typo[submatch(0)]/ge'
+        endfunction
+        command! RemoveFancyCharacters :call <SID>RemoveFancyCharacters()
     " }}}2
 
     " Create directories for swap, backup, undo, view files if they don't exist {{{2
@@ -877,30 +686,6 @@
         call s:InitializeDirectories()
     " }}}2
 
-    " Helper functions {{{2
-        " Check file whether is readable
-        function! s:CheckFileReadable(file)
-            if !filereadable(a:file)
-                silent! execute 'keepalt botright 1new'
-                silent! execute 'edit ' . a:file
-                silent! execute 'write!'
-                silent! execute 'bwipeout!'
-                silent! execute 'close!'
-                if !filereadable(a:file)
-                    echohl WarningMsg | echo a:file . " can't read!" | echohl None
-                    return
-                endif
-            endif
-        endfunction
-
-        " Check file whether is writable
-        function! s:CheckFileWritable(file)
-            if !filewritable(a:file)
-                echohl WarningMsg | echo a:file . " can't write!" | echohl None
-                return
-            endif
-        endfunction
-    " }}}2
 " }}}1
 
 " vim: set shiftwidth=4 tabstop=4 softtabstop=4 expandtab foldmethod=marker:
