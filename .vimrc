@@ -303,11 +303,6 @@
 
     " Tagbar {{{2
         nnoremap <silent> <Leader>t :TagbarToggle<CR>
-        if g:isWin
-            let g:tagbar_ctags_bin = $HOME.'/bin/ctags.exe'
-            let g:tagbar_type_javascript = { 'ctagsbin' : $HOME.'/bin/jsctags.bat' }
-            let g:tagbar_systemenc = 'cp936'
-        endif
         let g:tagbar_autofocus = 1
         let g:tagbar_type_markdown = {
                     \ 'ctagstype' : 'markdown',
@@ -325,14 +320,6 @@
                     \ 'C:contexts',
                     \ 'f:methods',
                     \ 'F:singleton methods'
-                    \ ]
-                    \ }
-        let g:tagbar_type_css = {
-                    \ 'ctagstype' : 'Css',
-                    \ 'kinds'     : [
-                    \ 'c:classes',
-                    \ 's:selectors',
-                    \ 'i:identities'
                     \ ]
                     \ }
     " }}}2
@@ -578,54 +565,6 @@
         inoremap <silent> <S-Down> <Esc>:call <SID>AddEmptyLine('+')<CR>a
         inoremap <silent> <C-Up> <Esc>:call <SID>DelEmptyLine('-')<CR>a
         inoremap <silent> <C-Down> <Esc>:call <SID>DelEmptyLine('+')<CR>a
-    " }}}2
-
-    " Preview markdown files {{{2
-        function! s:PreviewMarkdown()
-            if !executable('pandoc')
-                echohl ErrorMsg | echo 'Please install pandoc first.' | echohl None
-                return
-            endif
-            if g:isWin
-                let BROWSER_COMMAND = 'cmd.exe /c start ""'
-            elseif g:isMac
-                let BROWSER_COMMAND = 'open'
-            endif
-            let output_file = tempname() . '.html'
-            let input_file = tempname() . '.md'
-            let css_file = 'file://' . expand($HOME . '/.vimdb/pandoc/github.css', 1)
-            " Convert buffer to UTF-8 before running pandoc
-            let original_encoding = &fileencoding
-            let original_bomb = &bomb
-            silent! execute 'set fileencoding=utf-8 nobomb'
-            " Generate html file for preview
-            let content = getline(1, '$')
-            let newContent = []
-            for line in content
-                let str = matchstr(line, '\(!\[.*\](\)\@<=.\+\.\%(png\|jpe\=g\|gif\)')
-                if str != "" && match(str, '^https\=:\/\/') == -1
-                    let newLine = substitute(line, '\(!\[.*\]\)(' . str . ')',
-                                \'\1(file://' . escape(expand("%:p:h", 1), '\') . 
-                                \(g:isWin ? '\\\\' : '/') . 
-                                \escape(expand(str, 1), '\') . ')', 'g')
-                else
-                    let newLine = line
-                endif
-                call add(newContent, newLine)
-            endfor
-            call writefile(newContent, input_file)
-            silent! execute '!pandoc -f markdown -t html5 -s -S -c "' . css_file . '" -o "' . output_file .'" "' . input_file . '"'
-            call delete(input_file)
-            " Change encoding back
-            silent! execute 'set fileencoding=' . original_encoding . ' ' . original_bomb
-            " Preview 
-            silent! execute '!' . BROWSER_COMMAND . ' "' . output_file . '"'
-            execute input('Press ENTER to continue...')
-            echo
-            call delete(output_file)
-        endfunction
-
-        nnoremap <silent> <Leader>p :call <SID>PreviewMarkdown()<CR>
     " }}}2
 
     " Rename current file {{{2
