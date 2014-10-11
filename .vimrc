@@ -179,9 +179,6 @@
 
             " Resize splits when the window is resized
             autocmd VimResized * execute "normal! \<c-w>="
-
-            " Fast source $MYVIMRC
-            autocmd BufWritePost .vimrc source $MYVIMRC
         augroup END
 
         " OmniComplete
@@ -361,8 +358,8 @@
         let g:rubycomplete_include_objectspace = 1
     " }}}2
 
-    " Supertab {{{2
-        let g:SuperTabDefaultCompletionType = "context"
+    " YouCompleteMe {{{2
+        let g:ycm_key_invoke_completion = '<C-z>'
     " }}}2
 
     " Ultisnips {{{2
