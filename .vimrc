@@ -489,7 +489,41 @@
 
         " Set foldtext
         autocmd filetype vim,javascript,css setlocal foldtext=CustomFoldtext()
+    " }}}2
 
+    " Preview markdown file via Marked.app on Mac OS X {{{2
+        function! s:PreviewMarkdown()
+            if !g:isMac
+                echohl ErrorMsg | echo 'This function previewing markdown file via Marked only works on Mac OS X.' | echohl None
+                return
+            endif
+            if !executable('pandoc')
+                echohl ErrorMsg | echo 'Please install pandoc first.' | echohl None
+                return
+            endif
+            let temp = tempname() . '.md'
+            let content = getline(1, '$')
+            let newContent = []
+            if expand("%:p:h:h:t",1) == 'notes-md'
+                for line in content
+                    let str = matchstr(line, '\(!\[.*\](\)\@<=.\+\.\%(png\|jpe\=g\|gif\)')
+                    if str != "" && match(str, '^https\=:\/\/') == -1
+                        let newLine = substitute(line, '\(!\[.*\]\)(' . str . ')',
+                                    \'\1(' . expand("%:p:h:h",1) . '/images/' . expand("%:p:h:t", 1) . '/' . str . ')', 'g')
+                    else
+                        let newLine = line
+                    endif
+                    call add(newContent, newLine)
+                endfor
+            else
+                for line in content
+                    call add(newContent, line)
+                endfor
+            endif
+            call writefile(newContent, temp)
+            silent! execute '!open -a "Marked 2.app" ' . temp
+        endfunction
+        nnoremap <silent> <Leader>md :call <SID>PreviewMarkdown()<CR>
     " }}}2
 
     " Remaps arrow keys to indent/unindent and add/remove blank lines {{{2
