@@ -1,7 +1,11 @@
 #!/bin/bash
 function usage {
-    echo "Usage: `basename $0` [options] dirname filename"
-    exit 1
+    echo "Usage: `basename $0` [-k] [--keep] [-e extension] [--ext extension] [--ext=extension]"
+    echo -e "\t[-g[size]] [--geometry[=size]] dir1...dirn file1...filen"
+    echo -e "\n-k, --keep\n\tkeep original extension"
+    echo -e "-e extension, --ext extension, --ext=extension\n\tspecify customized extension"
+    echo -e "-g[size], --geometry[=size]\n\tresize to customized size"
+    echo -e "-h, --help\n\tshow help"
 }
 
 function preprocess {
@@ -9,11 +13,7 @@ function preprocess {
     local s="$2"
     [[ $f != *${ext}.$s && -f ${f%%.$s}${ext}.$s ]] && skip='true'
     if [[ $f == *${ext}.$s ]]; then
-        if [[ -f ${f/${ext}*.$s/.$s} ]]; then
-            contin='true'
-        else
-            delete='true'
-        fi
+        [[ -f ${f/${ext}*.$s/.$s} ]] && contin='true' || delete='true'
     fi
 }
 
@@ -65,17 +65,25 @@ function opt {
     skip='false'
     contin='false'
     delete='false'
-    [[ $s == 'jpg' || $s == 'png' ]] && exe "$f" "$s"
-    if [[ $s == 'jpeg' ]]; then
-        n="${f%%.jpeg}.jpg"
+    if [[ $s =~ ^[jJ][pP][gG]$ || $s =~ ^[pP][nN][gG]$ ]]; then
+        e=$(echo "$s" | tr '[:upper:]' '[:lower:]')
+        n="${f%%.$s}.$e"
+        [[ $e != $s ]] && mv "$f" "$n"
+        exe "$n" "$e"
+    fi
+    if [[ $s =~ ^[jJ][pP][eE][gG]$ ]]; then
+        n="${f%%.$s}.jpg"
         mv "$f" "$n"
         exe "$n" 'jpg'
     fi
 }
 
-[[ $# == "0" ]] && usage
+if [[ $# == "0" ]]; then
+    usage
+    exit 1
+fi
 
-TEMP=$(/usr/local/opt/gnu-getopt/bin/getopt -o ke:g:: --long keep,ext:,geometry:: -n 'optimgs.sh' -- "$@")
+TEMP=$(/usr/local/opt/gnu-getopt/bin/getopt -o ke:g::h --long keep,ext:,geometry::,help -n 'optimgs.sh' -- "$@")
 eval set -- "$TEMP"
 
 while true; do
@@ -91,12 +99,14 @@ while true; do
                 "") GEOMETRY="600x>"; shift 2;;
                 *) GEOMETRY="$2"; shift 2;;
             esac;;
+        -h|--help) usage; exit 0;;
         --) shift; break;;
         *) echo "Internal error!"; exit 1;;
     esac
 done
 
-ext="${EXTENSION:=-v5GwJ2}"
+ext="${EXTENSION:=v5GwJ2}"
+ext="-${ext}"
 for i in "$@"; do
     if [[ -d $i ]]; then
         ( cd "$i"; for f in *; do opt "$f"; done )

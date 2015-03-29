@@ -497,10 +497,6 @@
                 echohl ErrorMsg | echo 'This function previewing markdown file via Marked only works on Mac OS X.' | echohl None
                 return
             endif
-            if !executable('pandoc')
-                echohl ErrorMsg | echo 'Please install pandoc first.' | echohl None
-                return
-            endif
             let temp = tempname() . '.md'
             let content = getline(1, '$')
             let newContent = []
