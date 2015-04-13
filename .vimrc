@@ -27,12 +27,6 @@
         " let g:vimSiteReverseProxyServer = 'http://vim.wendal.net'
         " let g:curlProxy = 'socks://127.0.0.1:8888'
         call scriptbundle#rc()
-        " yankring
-        Script '1234'
-        " mark
-        Script '2666'
-        " Align
-        Script '294'
         " matchit
         Script '39'
         " mayansmoke colorscheme
@@ -254,6 +248,16 @@
             execute "set <xRight>=\e[1;*C"
             execute "set <xLeft>=\e[1;*D"
         endif
+
+        " Fix meta-keys which generate <Esc>a .. <Esc>z, <Esc>A .. <Esc>Z
+        let c='a'
+        while c <= 'z'
+            exec "set <M-".c.">=\e".c
+            exec "set <M-".toupper(c).">=\e".toupper(c)
+            exec "imap \e".c." <M-".c.">"
+            exec "imap \e".toupper(c)." <M-".toupper(c).">"
+            let c = nr2char(1+char2nr(c))
+        endwhile
     " }}}2
 
 " }}}1
@@ -263,9 +267,8 @@
 
     " NERDTree {{{2
         let NERDTreeChDirMode = 2
-        let s:extensionName = ['lib', 'so', 'obj', 'pdf', 'jpeg', 'jpg', 'png', 'gif', 'zip', 'rar', '7z', 'z', 'bz2', 'tar', 'gz', 'tgz', 
-                    \'exe', 'com', 'dll', 'ocx', 'drv', 'sys', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt']
-        let NERDTreeIgnore=['\c\.\(' . join(s:extensionName, '\|') . '\)$']
+        let s:extensionName = ['so', 'swp', 'pdf', 'jpeg', 'jpg', 'png', 'gif', 'zip', 'bz2', 'tar', 'gz', 'tgz'] 
+        let NERDTreeIgnore=['\c\.\(' . join(s:extensionName, '\|') . '\)$', '\C\.\(git\|hg\|svn\)$']
         let NERDTreeBookmarksFile = $HOME.'/.vimdb/.NERDTreeBookmarks'
         let NERDTreeAutoDeleteBuffer = 1
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
@@ -276,18 +279,10 @@
         nnoremap <silent> <Leader>fm :<C-U>CtrlPMRU<CR>
         nnoremap <silent> <Leader>b :<C-U>CtrlPBuffer<CR>
         let g:ctrlp_custom_ignore = {
-                    \'dir' : '\c^\(c:\\Windows\\\|c:\\Users\\[^\\]\+\\\)',
+                    \'dir' : '\C\.\(git\|hg\|svn\)$',
                     \'file' : '\c\.\(' . join(s:extensionName, '\|') . '\)$'
                     \}
         let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
-    " }}}2
-
-    " YankRing {{{2
-        let g:yankring_history_dir = $HOME.'/.vimdb'
-        nnoremap <silent> <Leader>y :YRGetElem<CR>
-        function! YRRunAfterMaps()
-            nnoremap <silent> Y :<C-U>YRYankCount 'y$'<CR>
-        endfunction
     " }}}2
 
     " Gundo {{{2
@@ -301,14 +296,6 @@
     " Tagbar {{{2
         nnoremap <silent> <Leader>t :TagbarToggle<CR>
         let g:tagbar_autofocus = 1
-        let g:tagbar_type_markdown = {
-                    \ 'ctagstype' : 'markdown',
-                    \ 'kinds' : [
-                    \ 'h:Heading_L1',
-                    \ 'i:Heading_L2',
-                    \ 'k:Heading_L3'
-                    \ ]
-                    \ }
         let g:tagbar_type_ruby = {
                     \ 'kinds' : [
                     \ 'm:modules',
@@ -325,23 +312,6 @@
         let g:syntastic_stl_format = 'L:%F, %E{Err:%e}%B{ }%W{Warn:%w}'
         let g:syntastic_javascript_checkers=['jslint']
         let g:syntastic_ruby_checkers=['mri', 'rubocop']
-    " }}}2
-
-    " Mark {{{2
-        let g:mwDefaultHighlightingPalette = 'extended'
-        nmap <Leader>mm <Plug>MarkSet
-        xmap <Leader>mm <Plug>MarkSet
-        nmap <Leader>mr <Plug>MarkRegex
-        xmap <Leader>mr <Plug>MarkRegex
-        nmap <Leader>mn <Plug>MarkClear
-        nmap <Leader>mt <Plug>MarkToggle
-        nmap <Leader>mc <Plug>MarkAllClear
-        nmap <Leader>m* <Plug>MarkSearchCurrentNext
-        nmap <Leader>m# <Plug>MarkSearchCurrentPrev
-        nmap <Leader>m/ <Plug>MarkSearchAnyNext
-        nmap <Leader>m? <Plug>MarkSearchAnyPrev
-        nmap <Plug>IgnoreMarkSearchNext <Plug>MarkSearchNext
-        nmap <Plug>IgnoreMarkSearchPrev <Plug>MarkSearchPrev
     " }}}2
 
     " Vim-javascript {{{2
@@ -370,7 +340,7 @@
 
     " Vim-util {{{2
         let g:darkColors = ['jellybeans', 'molokai']
-        let g:lightColors = ['mayansmoke']
+        let g:lightColors = ['mayansmoke', 'PaperColor']
     " }}}2
 
 " }}}1
