@@ -310,14 +310,7 @@
 
     " Syntastic {{{2
         let g:syntastic_stl_format = 'L:%F, %E{Err:%e}%B{ }%W{Warn:%w}'
-        let g:syntastic_javascript_checkers=['jslint']
         let g:syntastic_ruby_checkers=['mri', 'rubocop']
-    " }}}2
-
-    " Vim-javascript {{{2
-        let g:html_indent_inctags = "html,body,head,tbody"
-        let g:html_indent_script1 = "inc"
-        let g:html_indent_style1 = "inc"
     " }}}2
 
     " Vim-ruby {{{2

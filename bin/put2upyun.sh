@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-function usage {
-    echo "Usage: $(basename $0) [-b bucket_name] [--bucket bucket_name] [--bucket=bucket_name]" 
-    echo -e "\t[-c category_name] [--category category_name] [--category=category_name] file"
-    echo -e "\n-b bucket_name, --bucket bucket_name, --bucket=bucket_name\n\tspecify customized bucket"  
-    echo -e "-c category_name, --category category_name, --category=category_name\n\tspecify customized category"
-    echo -e "-h, --help\n\tshow help"
+usage() {
+    echo "Usage: ${0##*/} [-b bucket_name] [--bucket bucket_name] [--bucket=bucket_name]" 
+    echo -e '\t[-c category_name] [--category category_name] [--category=category_name] file'
+    echo -e '\n-b bucket_name, --bucket bucket_name, --bucket=bucket_name\n\tspecify customized bucket'  
+    echo -e '-c category_name, --category category_name, --category=category_name\n\tspecify customized category'
+    echo -e '-h, --help\n\tshow help'
 }
 
 (( $# )) || { usage; exit 1; }
 
-TEMP=$(getopt -o b:c:h --long bucket:,category:,help -n $(basename $0) -- "$@")
+TEMP=$(getopt -o b:c:h --long bucket:,category:,help -n ${0##*/} -- "$@")
 eval set -- "$TEMP"
 while true; do
     case "$1" in
@@ -25,7 +25,7 @@ while true; do
             esac;;
         -h|--help) usage; exit 0;;
         --) shift; break;;
-        *) echo "Internal error!"; exit 1;;
+        *) echo 'Internal error!'; exit 1;;
     esac
 done
 
@@ -40,15 +40,15 @@ policy=$(echo -n "${json}" | base64 | sed ':a;N;$!ba;s/\n//g')
 signature=$(echo -n "${policy}&${api}" | ${md5} | cut -f1 -d' ')
 # optimize when uploading file is image and optimgs.sh exists 
 [[ ${1##*.} =~ ^([Jj][Pp][Ee]?[Gg]|[Pp][Nn][Gg]|[Gg][Ii][Ff])$ ]] && IS_IMG='true'
-[[ -n ${IS_IMG} ]] && command -v imgoptz.sh >/dev/null 2>&1 && imgoptz.sh -k -g"800x>" $1
+[[ -n ${IS_IMG} ]] && command -v imgoptz.sh >/dev/null 2>&1 && imgoptz.sh -k -g'800x>' "$1"
 # generate url
 put=$(curl -s http://v0.api.upyun.com/${bucket} -F file=@"$1" -F policy="${policy}" -F signature="${signature}")
-if [[ $(cut -f2 -d"," <<< "${put}") == '"message":"ok"' ]]; then
+if [[ $(cut -f2 -d',' <<< "${put}") == '"message":"ok"' ]]; then
     uri=$(cut -f10 -d'"' <<< "${put}" | sed 's/\\//g')
     url="http://${bucket}.b0.upaiyun.com${uri}"
     echo "${url}"
     # send markdown format to clipboard on Mac OS X when uploaded file is image
-    [[ -n ${IS_IMG} && $(uname -s) == "Darwin"* ]] && echo "![](${url})" | pbcopy
+    [[ -n ${IS_IMG} && $(uname -s) == 'Darwin'* ]] && echo "![](${url})" | pbcopy
 else
-    echo "Upload error, please check again!"
+    echo 'Upload error, please check again!'
 fi

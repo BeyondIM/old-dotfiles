@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-[[ $(uname -s) != 'Darwin' ]] && { echo "This script only work on Mac OS X"; exit 1; }
+[[ $(uname -s) != 'Darwin' ]] && { echo 'This script only work on Mac OS X'; exit 1; }
 store=${HOME}/Dropbox/Desktoppr
 pics=()
 for f in "${store}"/*.jpg; do
@@ -17,7 +17,7 @@ elif [[ $1 =~ ^[p-]$ ]]; then
     (( ${idx} > 0 )) && idx=$((${idx}-1)) || idx=$((${#pics[@]}-1))
     change='true'
 else
-    echo "Usage: $(basename $0) or $(basename $0) [n,p,+,-]"
+    echo "Usage: ${0##*/} or ${0##*/} [n,p,+,-]"
     exit 1
 fi
 [[ -n ${change} ]] && osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"${pics[${idx}]}\""

@@ -1,3 +1,4 @@
 .vim/scripts
 
 *.log
+*.dat

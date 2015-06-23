@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-function color {
-    local message=$1
-    local prefix=""
+color() {
+    local message=$1 prefix=''
     [[ $2 =~ [0-7] ]] && prefix=$(tput setaf $2)
     [[ $3 =~ [0-7] ]] && prefix=$(tput setaf $2; tput setab $3)
     echo "${prefix}${message}$(tput sgr 0)"
@@ -13,7 +12,7 @@ for i in ${ARGS}; do
     gitDirs=($(find -L $i -maxdepth 2 -name ".git"))
     (( ${#gitDirs[@]} )) || continue
     for gitDir in "${gitDirs[@]}"; do
-        stat=""
+        stat=''
         workTree=${gitDir%/*}
         git --git-dir="${gitDir}" remote update >/dev/null 2>&1
         head=$(git --git-dir="${gitDir}" symbolic-ref HEAD)
@@ -32,7 +31,7 @@ for i in ${ARGS}; do
         grep 'Changes to be committed' <<< ${res} >/dev/null 2>&1
         (( $? )) || stat="${stat} $(color ' Staged ' 0 2)"
 
-        [[ ${branch} != master ]] && b=" $(color " ${branch} " 7 4)" || b=""
+        [[ ${branch} != master ]] && b=" $(color " ${branch} " 7 4)" || b=''
         [[ -n ${stat} ]] && echo -e "${workTree}${b} :${stat}"
     done
 done

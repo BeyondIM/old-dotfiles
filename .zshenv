@@ -27,6 +27,7 @@ typeset -gU path
 path=(
     $HOME/bin
     $HOME/.rbenv/bin
+    $HOME/node_modules/.bin
     /opt/bin
     /usr/local/sbin
     /usr/local/bin

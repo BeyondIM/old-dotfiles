@@ -10,9 +10,6 @@
 [submodule ".vim/bundle/molokai"]
 	path = .vim/bundle/molokai
 	url = git@github.com:tomasr/molokai.git
-[submodule ".vim/bundle/ctrlp.vim"]
-	path = .vim/bundle/ctrlp.vim
-	url = git@github.com:kien/ctrlp.vim.git
 [submodule ".vim/bundle/vim-surround"]
 	path = .vim/bundle/vim-surround
 	url = git@github.com:tpope/vim-surround.git
@@ -37,9 +34,6 @@
 [submodule ".vim/bundle/nerdtree-smart-bookmarks"]
 	path = .vim/bundle/nerdtree-smart-bookmarks
 	url = git@github.com:BeyondIM/nerdtree-smart-bookmarks.git
-[submodule ".vim/bundle/vim-javascript"]
-	path = .vim/bundle/vim-javascript
-	url = git@github.com:pangloss/vim-javascript.git
 [submodule ".vim/bundle/vim-ruby"]
 	path = .vim/bundle/vim-ruby
 	url = git@github.com:vim-ruby/vim-ruby.git
@@ -58,9 +52,6 @@
 [submodule ".vim/bundle/webapi-vim"]
 	path = .vim/bundle/webapi-vim
 	url = git://github.com/mattn/webapi-vim.git
-[submodule ".vim/bundle/ag.vim"]
-	path = .vim/bundle/ag.vim
-	url = https://github.com/rking/ag.vim
 [submodule ".vim/bundle/ultisnips"]
 	path = .vim/bundle/ultisnips
 	url = git@github.com:SirVer/ultisnips.git
@@ -70,9 +61,16 @@
 [submodule ".vim/bundle/YouCompleteMe"]
 	path = .vim/bundle/YouCompleteMe
 	url = git@github.com:Valloric/YouCompleteMe.git
-[submodule ".vim/bundle/vim-yankstack"]
-	path = .vim/bundle/vim-yankstack
-	url = git@github.com:maxbrunsfeld/vim-yankstack.git
+    ignore = dirty
 [submodule ".vim/bundle/papercolor-theme"]
 	path = .vim/bundle/papercolor-theme
 	url = git@github.com:NLKNguyen/papercolor-theme.git
+[submodule ".vim/bundle/ferret"]
+	path = .vim/bundle/ferret
+	url = git@github.com:wincent/ferret.git
+[submodule ".vim/bundle/vim-dispatch"]
+	path = .vim/bundle/vim-dispatch
+	url = git@github.com:tpope/vim-dispatch.git
+[submodule ".vim/bundle/ctrlp.vim"]
+	path = .vim/bundle/ctrlp.vim
+	url = git@github.com:ctrlpvim/ctrlp.vim.git
