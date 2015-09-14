@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-[[ $(uname -s) != 'Darwin' ]] && { echo 'This script only work on Mac OS X'; exit 1; }
+[[ $(uname -s) != 'Darwin' ]] && { echo 'This script only work on Mac OS X.'; exit 1; }
+
+RED="\033[0;31m" GRN="\033[0;32m" NRM="\033[0m"
+
 if [[ $1 == 1 ]]; then
     defaults write com.apple.finder AppleShowAllFiles -bool TRUE && killall Finder 
-    echo "Current all hidden files status: $(tput setaf 1)show$(tput sgr 0)"
+    echo -e "Current all hidden files status: ${RED}show${NRM}"
 elif [[ $1 == 0 ]]; then
     defaults write com.apple.finder AppleShowAllFiles -bool FALSE && killall Finder
-    echo "Current all hidden files status: $(tput setaf 2)hide$(tput sgr 0)"
+    echo -e "Current all hidden files status: ${GRN}hide${NRM}"
 else
     echo "Usage: ${0##*/} [0,1]"
 fi

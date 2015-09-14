@@ -7,10 +7,10 @@ process() {
     tmux new-window -t ${session}:2 -n 'server'
     tmux split-window -h
     tmux split-window -v
-    [[ -z $(ps aux | grep 'zeus slave: test_helper' | grep -v 'grep') && -e $1/.zeus.sock ]] && rm -f $1/.zeus.sock
+    [[ -z $(pgrep -f 'zeus slave: test_helper') && -e $1/.zeus.sock ]] && rm -f $1/.zeus.sock
     tmux send-keys 'zeus start' C-m
     # check zeus is ready
-    until [[ -n $(ps aux | grep 'zeus slave: test_helper' | grep -v 'grep') ]]; do 
+    until [[ -n $(pgrep -f 'zeus slave: test_helper') ]]; do 
         sleep 2
     done
     tmux select-pane -t 2
@@ -24,11 +24,13 @@ process() {
     tmux select-window -t ${session}:1
 }
 
-command -v tmux >/dev/null 2>&1 || { echo 'Please install tmux at first'; exit 1; }
+command -v tmux >/dev/null 2>&1 || { echo 'Please install tmux at first.'; exit 1; }
+
 (( $# )) && ARGS="$@" || ARGS="${HOME}/Sites"
+
 dirs=()
 for i in ${ARGS}; do
-    [[ -d $i ]] || { echo "$i is not a directory, skipping."; continue; }
+    [[ -d $i ]] || { echo "$i is not a directory, skipping"; continue; }
     for j in "$i"/{.[a-zA-Z0-9],}*; do
         if [[ -d $j && -x $j/bin/rails ]]; then
             tmux has -t "${j##*/}" 2>/dev/null 
@@ -38,9 +40,8 @@ for i in ${ARGS}; do
 done
 (( ${#dirs[@]} )) || { echo 'No exist rails projects.'; exit 1; }
 
-IFS=$'\n'
 PS3='Please select a rails project: '
-select dir in ${dirs[@]}; do
+select dir in "${dirs[@]}"; do
     if [[ -n ${dir} ]]; then
         s="${dir%%:*}"
         tmux has -t "${s##*/}" 2>/dev/null 

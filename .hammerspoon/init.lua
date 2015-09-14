@@ -15,7 +15,8 @@ local key2app = {
     v = 'MacVim',
     e = 'Clearview',
     b = 'Firefox',
-    f = 'Finder'
+    f = 'Finder',
+    s = 'Sublime Text'
 }
 
 for key, app in pairs(key2app) do
@@ -138,7 +139,7 @@ function mouseHighlight()
     mouseCircleTimer = hs.timer.doAfter(3, function() mouseCircle:delete() end)
 end
 
-hs.hotkey.bind(shift_alt, 'm', mouseHighlight)
+hs.hotkey.bind(shift_alt, '\\', mouseHighlight)
 
 -- caffeine
 local notice = nil
@@ -161,8 +162,8 @@ function setCaffeine(mode)
     end
 end
 
-hs.hotkey.bind(shift_alt, 'c', function() setCaffeine("displayIdle") end)
-hs.hotkey.bind(shift_cmd, 'c', function() setCaffeine("systemIdle") end)
+hs.hotkey.bind(shift_alt, ',', function() setCaffeine("displayIdle") end)
+hs.hotkey.bind(shift_alt, '.', function() setCaffeine("systemIdle") end)
 
 -- reload config
 function reloadConfig(files)

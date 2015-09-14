@@ -1,4 +1,6 @@
 .vim/scripts
+.config
+.aria2
 
 *.log
 *.dat

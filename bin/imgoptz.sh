@@ -8,82 +8,70 @@ usage() {
     echo -e '-h, --help\n\tshow help'
 }
 
-color() {
-    local message=$1 prefix=''
-    [[ $2 =~ [0-7] ]] && prefix=$(tput setaf $2)
-    [[ $3 =~ [0-7] ]] && prefix=$(tput setaf $2; tput setab $3)
-    echo "${prefix}${message}$(tput sgr 0)"
-}
-
 preprocess() {
-    local f="$1" s="$2"
-    [[ $f != *-${ext}.$s && -f ${f%%.$s}-${ext}.$s ]] && skip='true'
-    if [[ $f == *-${ext}.$s ]]; then
-        [[ -f $(sed "s/\(-${ext}\)\{1,\}.$s/.$s/g" <<< $f) ]] && contin='true' || delete='true'
+    [[ $1 != *-${ext}.$2 && -f ${1%%.$2}-${ext}.$2 ]] && skip_cur='true'
+    if [[ $1 == *-${ext}.$2 ]]; then
+        [[ -f $(sed "s/\(-${ext}\)\{1,\}.$2/.$2/g" <<< $1) ]] && skip_ful='true' || delete='true'
     fi
 }
 
 process() {
-    local f="$1" s="$2"
-    local n="${f%%.$s}-${ext}.$s"
-    echo "===== Compress $f ====="
-    if [[ $s =~ ^jpe?g$ ]]; then
-        command -v convert >/dev/null 2>&1 || { color 'Please install imagemagick at first, skipping!' 1; continue; }
-        command -v jpegtran >/dev/null 2>&1 || { color 'Please install mozjpeg at first, skipping!' 1; continue; }
-        convert -strip -quality 80% "$f" "$n"
+    local n="${1%%.$2}-${ext}.$2"
+    echo "===== Compress $1 ====="
+    if [[ $2 =~ ^jpe?g$ ]]; then
+        command -v convert >/dev/null 2>&1 || { echo -e "Please install ${RED}imagemagick${NRM} at first."; exit 1; }
+        command -v jpegtran >/dev/null 2>&1 || { echo -e "Please install ${RED}mozjpeg${NRM} at first."; exit 1; }
+        convert -strip -quality 80% "$1" "$n"
         jpegtran -copy none -optimize -progressive -outfile "$n" "$n"
     fi
-    if [[ $s == 'png' ]]; then
-        command -v pngquant >/dev/null 2>&1 || { color 'Please install pngquant at first, skipping!' 1; continue; }
-        command -v pngout >/dev/null 2>&1 || { color 'Please install pngout at first, skipping!' 1; continue; }
-        pngquant --speed 1 --ext -${ext}.png "$f"
+    if [[ $2 == 'png' ]]; then
+        command -v pngquant >/dev/null 2>&1 || { echo -e "Please install ${RED}pngquant${NRM} at first."; exit 1; }
+        command -v pngout >/dev/null 2>&1 || { echo -e "Please install ${RED}pngout${NRM} at first."; exit 1; }
+        pngquant --speed 1 --ext -${ext}.png "$1"
         pngout -f6 -kp -ks "$n"
     fi
-    if [[ $s == 'gif' ]]; then
-        command -v gifsicle >/dev/null 2>&1 || { color 'Please install giflossy at first, skipping!' 1; continue; }
-        gifsicle -O3 --lossy=80 -o "$n" "$f"
+    if [[ $2 == 'gif' ]]; then
+        command -v gifsicle >/dev/null 2>&1 || { echo -e "Please install ${RED}giflossy${NRM} at first."; exit 1; }
+        gifsicle -O3 --lossy=80 -o "$n" "$1"
     fi
 }
 
 resize() {
-    local f="$1" s="$2"
-    local n="${f%%.$s}-${ext}.$s"
+    local n="${1%%.$2}-${ext}.$2"
     echo "===== Resize $n ====="
-    convert -resize "${GEOMETRY}" "$n" "$n"
+    convert -resize "${GEO}" "$n" "$n"
 }
 
 rename() {
-    local f="$1" s="$2"
-    local n="${f%%.$s}-${ext}.$s"
+    local n="${1%%.$2}-${ext}.$2"
     echo "===== Rename $n ====="
-    mv "$n" "$f"
+    mv "$n" "$1"
 }
 
 exe() {
-    local f="$1" s="$2"
-    preprocess "$f" "$s"
-    [[ ${contin} == 'true' ]] && continue
-    [[ ${delete} == 'true' ]] && rm -f "$f" && continue
-    [[ ${skip} == 'false' ]] && process "$f" "$s"
-    [[ -n ${GEOMETRY} ]] && resize "$f" "$s"
-    [[ -n ${KEEP} ]] && rename "$f" "$s"
+    preprocess "$1" "$2"
+    [[ ${skip_ful} == 'true' ]] && exit 0
+    [[ ${delete} == 'true' ]] && rm -f "$1" && exit 0
+    [[ ${skip_cur} == 'false' ]] && process "$1" "$2"
+    [[ -n ${GEO} ]] && resize "$1" "$2"
+    [[ -n ${KEEP} ]] && rename "$1" "$2"
 }
 
 opt() {
-    local f="$1"
-    local s="${f##*.}"
-    skip='false'
-    contin='false'
+    local s="${1##*.}"
+    skip_cur='false'
+    skip_ful='false'
     delete='false'
     if [[ $s =~ ^([jJ][pP][Ee]?[gG]|[pP][nN][gG]|[Gg][Ii][Ff])$ ]]; then
         e=$(tr '[:upper:]' '[:lower:]' <<< "$s")
-        n="${f%%.$s}.$e"
-        [[ $e != $s ]] && mv "$f" "$n"
+        n="${1%%.$s}.$e"
+        [[ $e != $s ]] && mv "$1" "$n"
         exe "$n" "$e"
     fi
 }
 
 (( $# )) || { usage; exit 1; }
+command -v parallel >/dev/null 2>&1 || { echo "This script doesn't work without parallel."; exit 1; }
 
 TEMP=$(getopt -o ke:g::h --long keep,ext:,geometry::,help -n ${0##*/} -- "$@")
 eval set -- "$TEMP"
@@ -98,8 +86,8 @@ while true; do
             esac;;
         -g|--geometry)
             case "$2" in
-                "") GEOMETRY='600x>'; shift 2;;
-                *) GEOMETRY="$2"; shift 2;;
+                "") GEO='600x>'; shift 2;;
+                *) GEO="$2"; shift 2;;
             esac;;
         -h|--help) usage; exit 0;;
         --) shift; break;;
@@ -107,10 +95,12 @@ while true; do
     esac
 done
 
-ext="${EXTENSION:=v5GwJ2}"
+export KEEP GEO ext="${EXTENSION:=v5GwJ2}"
+export RED="\033[0;31m" NRM="\033[0m"
+export -f preprocess process resize rename exe opt
 for i in "$@"; do
     if [[ -d $i ]]; then
-        ( cd "$i"; for f in *; do opt "$f"; done )
+        ( cd "$i"; parallel -k opt ::: *.* 2>/dev/null )
     elif [[ -f $i ]]; then
         opt "$i"
     fi

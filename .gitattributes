@@ -4,6 +4,10 @@
 .gvimrc text eol=lf
 *.vim text eol=lf
 
-*.png binary
-*.jpg binary
-*.gif binary
+*.png binary -delta
+*.jpeg binary -delta
+*.jpg binary -delta
+*.gif binary -delta
+*.gz binary -delta
+*.bz2 binary -delta
+*.tgz binary -delta
