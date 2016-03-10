@@ -16,7 +16,7 @@ comp() {
 
 cask() {
     local rv=$(brew cask info $1 | awk -F': ' 'NR == 1 {print $2}')
-    local lvs=($(ls -td /opt/homebrew-cask/Caskroom/$1/* | awk -F'/' '{print $NF}'))
+    local lvs=($(ls -td /usr/local/Caskroom/$1/* | awk -F'/' '{print $NF}'))
     local lv="${lvs[0]}"
     [[ ${#lvs[@]} -ne 1 ]] && local chaos="${RED}*${NRM}" || local chaos=''
     if [[ ${rv} =~ ^[0-9._-]+$ ]] && [[ ${lv} =~ ^[0-9._-]+$ ]]; then
@@ -32,7 +32,7 @@ cask() {
 
 macupdate() {
     local app=$(cut -d ',' -f 1 <<< "$1")
-    local url='http://www.macupdate.com/app/mac/'$(cut -d ',' -f 2 <<< "$1")
+    local url='https://www.macupdate.com/app/mac/'$(cut -d ',' -f 2 <<< "$1")
     local rv=$(curl -s ${url} | grep 'twitter:data2' | awk -F'"' '{print $4}')
     if [[ -d /Applications/${app}.app ]]; then
         local appPath=/Applications/${app}.app

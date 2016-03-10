@@ -181,7 +181,7 @@
                     \endif
 
         " Customize indent style
-        autocmd FileType html,xhtml,css,javascript,ruby,eruby setlocal tabstop=2 shiftwidth=2 softtabstop=2
+        autocmd FileType html,xhtml,css,scss,javascript,ruby,eruby setlocal tabstop=2 shiftwidth=2 softtabstop=2
 
         " Diff orig file
         if !exists(":DiffOrig")
@@ -332,7 +332,7 @@
     " }}}2
 
     " Vim-util {{{2
-        let g:darkColors = ['jellybeans', 'molokai']
+        let g:darkColors = ['jellybeans', 'molokai', 'spacegray']
         let g:lightColors = ['mayansmoke', 'PaperColor']
     " }}}2
 

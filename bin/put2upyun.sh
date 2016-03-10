@@ -27,7 +27,7 @@ while true; do
             esac;;
         -g|--geometry)
             case "$2" in
-                "") GEO='760x>'; shift 2;;
+                "") shift 2;;
                 *) GEO="$2"; shift 2;;
             esac;;
         -h|--help) usage; exit 0;;
@@ -41,15 +41,16 @@ api_file=${HOME}/.upyun_api
 bucket="${BUCKET_NAME:=beyondim-notes}"
 api="$(grep ${bucket}, ${api_file} | cut -f2 -d',')"
 cat="${CATEGORY:=$(grep ${bucket}, ${api_file} | cut -f3 -d',')}"
+geo="${GEO:=$(grep ${bucket}, ${api_file} | cut -f4 -d',')x>}"
 
 json="{\"bucket\":\"${bucket}\",\"expiration\":1640966400,\"save-key\":\"/${cat}/{random}{.suffix}\"}"
 policy=$(echo -n "${json}" | base64 | sed ':a;N;$!ba;s/\n//g')
 signature=$(echo -n "${policy}&${api}" | ${md5} | cut -f1 -d' ')
 # optimize when uploading file is image and optimgs.sh exists 
 [[ ${1##*.} =~ ^([Jj][Pp][Ee]?[Gg]|[Pp][Nn][Gg]|[Gg][Ii][Ff])$ ]] && IS_IMG='true'
-[[ -n ${IS_IMG} ]] && command -v imgoptz.sh >/dev/null 2>&1 && imgoptz.sh -k -g${GEO} "$1"
+[[ -n ${IS_IMG} ]] && command -v imgoptz.sh >/dev/null 2>&1 && imgoptz.sh -k -g${geo} "$1"
 # generate url
-put=$(curl -s http://v0.api.upyun.com/${bucket} -F file=@"$1" -F policy="${policy}" -F signature="${signature}")
+put=$(curl -s http://v0.api.upyun.com/${bucket} -F file=@"\"$1\"" -F policy="${policy}" -F signature="${signature}")
 if [[ $(grep -oE '"message":"[^,]*?"' <<< "${put}") == '"message":"ok"' ]]; then
     uri=$(grep -oE '"url":"[^,]*?"' <<< "${put}" | cut -d '"' -f 4 | sed 's/\\//g')
     url="http://${bucket}.b0.upaiyun.com${uri}"
