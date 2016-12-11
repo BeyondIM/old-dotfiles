@@ -211,18 +211,16 @@
         nnoremap <Leader>w :<C-U>w!<CR>
 
         " Toggle search highlighting
-        nnoremap <silent> <Leader>/ :set hlsearch! hlsearch?<CR>
+        nnoremap <silent> <Leader>th :set hlsearch! hlsearch?<CR>
 
         " Invert 'foldenable'
-        nnoremap <Leader>= :set foldenable! foldenable?<CR>
+        nnoremap <Leader>tf :set foldenable! foldenable?<CR>
 
         " Toggle wrap lines
-        nnoremap <silent> <F2> :set wrap! wrap?<CR>
+        nnoremap <silent> <Leader>tw :set wrap! wrap?<CR>
 
         " Toggle listchars
-        nnoremap <silent> <F3> :set list! list?<CR>
-        imap <F3> <C-O><F3>
-        xmap <F3> <Esc><F3>gv
+        nnoremap <silent> <Leader>tl :set list! list?<CR>
 
         " Don't jump when using * for search
         nnoremap * *<c-o>
@@ -274,16 +272,10 @@
         nnoremap <silent> <Leader>nn :<C-U>NERDTreeToggle<CR>
     " }}}2
 
-    " CtrlP {{{2
-        nnoremap <silent> <Leader>ff :<C-U>CtrlP<CR>
-        nnoremap <silent> <Leader>fm :<C-U>CtrlPMRU<CR>
-        nnoremap <silent> <Leader>b :<C-U>CtrlPBuffer<CR>
-        let g:ctrlp_custom_ignore = {
-                    \'dir' : '\C\.\(git\|hg\|svn\)$',
-                    \'file' : '\c\.\(' . join(s:extensionName, '\|') . '\)$'
-                    \}
-        let g:ctrlp_cache_dir = $HOME.'/.vimdb/ctrlp'
-    " }}}2
+    " Fzf {{{2
+        set runtimepath+=$HOME/.fzf
+        nnoremap <silent> <Leader>b :<C-U>Buffers<CR>
+    "  }}}2
 
     " Gundo {{{2
         nnoremap <Leader>u :GundoToggle<CR>
@@ -308,9 +300,16 @@
                     \ }
     " }}}2
 
-    " Syntastic {{{2
-        let g:syntastic_stl_format = 'L:%F, %E{Err:%e}%B{ }%W{Warn:%w}'
-        let g:syntastic_ruby_checkers=['mri', 'rubocop']
+    " Ale {{{2
+        let g:ale_lint_on_save = 1
+        let g:ale_lint_on_text_changed = 0
+        let g:ale_lint_on_enter = 0
+        let g:ale_statusline_format = ['Err: %d', 'Warn: %d', '']
+        let g:ale_echo_msg_error_str = 'E'
+        let g:ale_echo_msg_warning_str = 'W'
+        let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+        nmap <silent> <C-u> <Plug>(ale_previous_wrap)
+        nmap <silent> <C-d> <Plug>(ale_next_wrap)
     " }}}2
 
     " Vim-ruby {{{2
